@@ -36,7 +36,7 @@ jobs:
 
       - name: Download $LAMBDA_NAME artifact from S3 build bucket
         run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET} lambda.zip
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET} lambda.zip
 
       - name: Init Terraform
         working-directory: terraform/deploy-stock-data-to-dynamo
