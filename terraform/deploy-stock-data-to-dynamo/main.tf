@@ -46,7 +46,8 @@ resource "aws_iam_policy" "lambda_policy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject"
+          "s3:GetObject",
+          "s3:DeleteObject"
         ]
         Resource = "arn:aws:s3:::${var.shared_data_bucket}/magnificent7-*.json.gz"
       },
