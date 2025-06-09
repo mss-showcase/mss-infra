@@ -1,13 +1,3 @@
-variable "cf_public_key_name" {
-  type    = string
-  default = "cf-public-key"
-}
-
-variable "cf_key_group_name" {
-  type    = string
-  default = "cf-key-group"
-}
-
 resource "aws_cloudfront_public_key" "cf_public_key" {
   name        = var.cf_public_key_name
   encoded_key = file("${path.module}/public.pem")
