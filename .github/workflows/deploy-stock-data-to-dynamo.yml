@@ -14,7 +14,6 @@ env:
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
   LAMBDA_NAME: ${{ vars.MSS_STOCK_DATA_TO_DYNAMO_LAMBDA_NAME }}
   MSS_STOCK_DATA_TO_DYNAMO_VERSION: 1.0.0
-  MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET: "deploy/mss-stock-data-to-dynamo/${MSS_STOCK_DATA_TO_DYNAMO_VERSION}/mss-stock-data-to-dynamo.zip"
   FILES_TABLE: ${{ vars.FILES_TABLE }}
   TICKS_TABLE: ${{ vars.TICKS_TABLE }}
 
@@ -33,6 +32,10 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+
+      - name: Set Lambda artifact location
+        run: |
+          echo "MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET=deploy/mss-stock-data-to-dynamo/${MSS_STOCK_DATA_TO_DYNAMO_VERSION}/mss-stock-data-to-dynamo.zip" >> $GITHUB_ENV
 
       - name: Download $LAMBDA_NAME artifact from S3 build bucket
         run: |
