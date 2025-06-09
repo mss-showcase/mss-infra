@@ -88,8 +88,8 @@ jobs:
         run: |
           terraform apply -auto-approve \
             -var="cf_public_key_name=$CF_PUBLIC_KEY_NAME" \
-            -var="cf_key_group_name=$CF_KEY_GROUP_NAME"
-
+            -var="cf_key_group_name=$CF_KEY_GROUP_NAME" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET"
       - name: Get CloudFront Key Group ID output from Terraform
         id: keygroup_output
         working-directory: terraform/cloudfront-key

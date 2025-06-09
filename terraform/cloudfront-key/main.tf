@@ -12,7 +12,7 @@ resource "aws_cloudfront_key_group" "cf_key_group" {
 }
 
 resource "aws_s3_bucket" "build_artifacts" {
-  bucket        = "aws-pet-project-build-artifacts"
+  bucket        = var.build_data_bucket
   force_destroy = true
 }
 
