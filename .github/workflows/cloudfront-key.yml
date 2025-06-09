@@ -74,12 +74,14 @@ jobs:
         run: |
           if aws s3api head-bucket --bucket "$SHARED_BUILD_DATA_BUCKET" --region "$AWS_REGION" 2>/dev/null; then
             echo "Bucket $SHARED_BUILD_DATA_BUCKET exists, importing to Terraform state..."
-            terraform import -input=false aws_s3_bucket.build_artifacts "$SHARED_BUILD_DATA_BUCKET" || true
+            terraform import \
+            -var="cf_public_key_name=$CF_PUBLIC_KEY_NAME" \
+            -var="cf_key_group_name=$CF_KEY_GROUP_NAME" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \            
+            -input=false aws_s3_bucket.build_artifacts "$SHARED_BUILD_DATA_BUCKET" || true
           else
             echo "Bucket $SHARED_BUILD_DATA_BUCKET does not exist, will be created by Terraform."
           fi
-
-
       - name: Terraform Apply
         working-directory: terraform/cloudfront-key
         env:
