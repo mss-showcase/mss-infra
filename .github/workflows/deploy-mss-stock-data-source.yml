@@ -63,7 +63,7 @@ jobs:
 
       - name: Download $LAMBDA_NAME artifact from S3 build bucket
         run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/${LAMBDA_NAME}.zip lambda.zip
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/${LAMBDA_NAME}.zip lambda.zip
 
       - name: Init Terraform
         working-directory: terraform/mss-stock-data-source
@@ -86,7 +86,7 @@ jobs:
             -var="lambda_name=$LAMBDA_NAME" \
             -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
             -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
-            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
+            -var="artifact_key=deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
 
       - name: Terraform Import IAM Role
         working-directory: terraform/mss-stock-data-source
@@ -98,7 +98,7 @@ jobs:
             -var="lambda_name=$LAMBDA_NAME" \
             -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
             -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
-            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            -var="artifact_key=deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
             aws_iam_role.lambda_role mss-lambda-exec-role
 
       - name: Terraform Import Lambda Function
@@ -111,7 +111,7 @@ jobs:
             -var="lambda_name=$LAMBDA_NAME" \
             -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
             -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
-            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            -var="artifact_key=deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
             aws_lambda_function.$LAMBDA_NAME $LAMBDA_NAME
 
       - name: Terraform Import Lambda Allow Events Permission
@@ -124,7 +124,7 @@ jobs:
             -var="lambda_name=$LAMBDA_NAME" \
             -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
             -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
-            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            -var="artifact_key=deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
             aws_lambda_permission.allow-events $LAMBDA_NAME/AllowExecutionFromCloudWatch
 
       - name: Terraform apply
@@ -137,4 +137,4 @@ jobs:
             -var="lambda_name=$LAMBDA_NAME" \
             -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
             -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
-            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
+            -var="artifact_key=deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
