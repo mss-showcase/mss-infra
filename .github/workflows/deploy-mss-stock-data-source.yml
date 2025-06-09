@@ -81,6 +81,7 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: |
           terraform plan \
+            -input=false \
             -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
             -var="data_bucket=$SHARED_BUILD_DATA_BUCKET" \
             -var="lambda_name=$LAMBDA_NAME" \
@@ -92,6 +93,7 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: |
           terraform import \
+            -input=false \
             -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
             -var="app_data_bucket=$SHARED_DATA_BUCKET" \
             -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
@@ -105,6 +107,7 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: |
           terraform import \
+            -input=false \
             -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
             -var="app_data_bucket=$SHARED_DATA_BUCKET" \
             -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
@@ -118,6 +121,7 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: |
           terraform import \
+            -input=false \
             -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
             -var="app_data_bucket=$SHARED_DATA_BUCKET" \
             -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
@@ -130,7 +134,7 @@ jobs:
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
         run: |
-          terraform apply -auto-approve \
+          terraform apply -input=false -auto-approve \
             -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
             -var="app_data_bucket=$SHARED_DATA_BUCKET" \
             -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
