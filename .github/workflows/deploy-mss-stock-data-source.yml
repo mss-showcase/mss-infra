@@ -103,7 +103,7 @@ jobs:
 
       - name: Terraform Import Lambda Allow Events Permission
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow-events $LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow-events stock_data_lambda/AllowExecutionFromCloudWatch || true
 
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
