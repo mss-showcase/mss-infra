@@ -76,7 +76,6 @@ resource "aws_lambda_function" "stock_data_to_dynamo" {
     variables = {
       FILES_TABLE = var.files_table
       TICKS_TABLE = var.ticks_table
-      AWS_REGION  = var.aws_region
     }
   }
 }
