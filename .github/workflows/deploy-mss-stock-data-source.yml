@@ -95,15 +95,15 @@ jobs:
 
       - name: Terraform Import IAM Role
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.lambda_role mss-lambda-exec-role
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.lambda_exec_role mss-lambda-exec-role || true
 
       - name: Terraform Import Lambda Function
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.$LAMBDA_NAME $LAMBDA_NAME
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.$LAMBDA_NAME $LAMBDA_NAME || true
 
       - name: Terraform Import Lambda Allow Events Permission
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow-events $LAMBDA_NAME/AllowExecutionFromCloudWatch
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow-events $LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
