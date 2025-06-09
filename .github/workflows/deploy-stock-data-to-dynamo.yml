@@ -91,6 +91,16 @@ jobs:
         working-directory: terraform/deploy-stock-data-to-dynamo
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_s3 ${LAMBDA_NAME}/AllowExecutionFromS3 || true
 
+      - name: Terraform Import Lambda Policy
+        working-directory: terraform/deploy-stock-data-to-dynamo
+        run: |
+          POLICY_ARN=$(aws iam list-policies --scope Local --query "Policies[?PolicyName=='m7_lambda_policy'].Arn" --output text)
+          if [ -n "$POLICY_ARN" ]; then
+            terraform import -input=false -var-file=ci.auto.tfvars aws_iam_policy.lambda_policy $POLICY_ARN || true
+          else
+            echo "Policy m7_lambda_policy not found, skipping import."
+          fi
+
       - name: Terraform apply
         working-directory: terraform/deploy-stock-data-to-dynamo
         run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
