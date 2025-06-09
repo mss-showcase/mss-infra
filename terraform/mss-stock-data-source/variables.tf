@@ -10,11 +10,6 @@ variable "lambda_version" {
   default     = "1.0.0"
 }
 
-variable "data_bucket" {
-  description = "value of the S3 bucket name to store data"
-  type        = string
-}
-
 variable "artifact_key" {
   description = "value of the S3 key for the Lambda function artifact"
   type        = string
