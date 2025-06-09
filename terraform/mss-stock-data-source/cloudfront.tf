@@ -61,7 +61,7 @@ resource "aws_s3_bucket_policy" "app_data_policy" {
         Principal = {
           AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
         },
-        Action = "s3:GetObject",
+        Action   = "s3:GetObject",
         Resource = "arn:aws:s3:::${var.app_data_bucket}/*"
       }
     ]

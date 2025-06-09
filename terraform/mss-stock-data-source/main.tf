@@ -28,15 +28,15 @@ resource "aws_lambda_function" "stock_data_lambda" {
 
   environment {
     variables = {
-      ALPHAVANTAGE_API_KEY    = var.alphavantage_api_key
-      SHARED_DATA_BUCKET = var.app_data_bucket
-      AWS_REGION              = var.aws_region
+      ALPHAVANTAGE_API_KEY = var.alphavantage_api_key
+      SHARED_DATA_BUCKET   = var.app_data_bucket
+      AWS_REGION           = var.aws_region
     }
   }
 }
 
 resource "aws_cloudwatch_event_rule" "every_half_hour" {
-  name        = "${var.lambda_name}-schedule"
+  name                = "${var.lambda_name}-schedule"
   schedule_expression = "cron(0/30 9-17 ? * MON-FRI *)"
 }
 
