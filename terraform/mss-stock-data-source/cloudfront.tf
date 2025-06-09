@@ -47,7 +47,7 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   }
 
   tags = {
-    Name = "aws-pet-project-cf"
+    Name = "mss showcase project"
   }
 }
 
