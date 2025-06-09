@@ -14,8 +14,10 @@ jobs:
 
     env:
       AWS_REGION: ${{ vars.AWS_REGION }}
-      SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }} // used for app data
-      SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }} // used for build artifacts
+      # used for app data
+      SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }} 
+      # used for build artifacts
+      SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }} 
       CURRENT_TIMESTAMP: ""
 
     steps:
