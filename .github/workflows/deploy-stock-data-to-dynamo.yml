@@ -36,6 +36,7 @@ jobs:
 
       - name: Download $LAMBDA_NAME artifact from S3 build bucket
         run: |
+          echo "Downloading $LAMBDA_NAME artifact from S3 bucket: ${SHARED_BUILD_DATA_BUCKET}, location: ${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET}"
           aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET} lambda.zip
 
       - name: Init Terraform
