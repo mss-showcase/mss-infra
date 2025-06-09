@@ -99,7 +99,7 @@ jobs:
 
       - name: Terraform Import Lambda Function
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.$LAMBDA_NAME $LAMBDA_NAME || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_lambda $LAMBDA_NAME || true
 
       - name: Terraform Import Lambda Allow Events Permission
         working-directory: terraform/mss-stock-data-source
