@@ -108,7 +108,7 @@ jobs:
 
       - name: Terraform Import Lambda Allow Events Permission
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow-events stock_data_lambda/AllowExecutionFromCloudWatch || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       - name: Terraform CloudFront Distribution
         working-directory: terraform/mss-stock-data-source
@@ -122,6 +122,6 @@ jobs:
         id: cf_output
         working-directory: terraform/mss-stock-data-source
         run: terraform output -raw cloudfront_distribution_id > ../../CLOUDFRONT_DISTRIBUTION_ID.txt
-        
+
       - name: Upload CloudFront Distribution ID to S3
         run: aws s3 cp CLOUDFRONT_DISTRIBUTION_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DISTRIBUTION_ID.txt --region $AWS_REGION
