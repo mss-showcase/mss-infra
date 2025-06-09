@@ -1,0 +1,135 @@
+name: Deploy MSS Stock Data Source Lambda
+
+on:
+  workflow_dispatch:
+
+# github org vars and secrets
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }} # used for app data
+  SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }} # used for build artifacts
+  LAMBDA_NAME: mss-stock-data-source-lambda
+  MSS_STOCK_DATA_SOURCE_VERSION: 1.0.0
+  ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }} # API key for Alpha Vantage
+
+# This workflow deploys the MSS Stock Data Source Lambda function.
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+# from here we are working on the cloudfront preparation
+
+      - name: Download Key Group ID file from S3
+        run: aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_KEY_GROUP_ID.txt CLOUDFRONT_KEY_GROUP_ID.txt --region $AWS_REGION
+
+      - name: Download Private Key Secret Name file from S3
+        run: aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt --region $AWS_REGION
+
+      - name: Set CLOUDFRONT_KEY_GROUP_ID and PRIVATE_KEY_SECRET_NAME env vars
+        run: |
+          echo "CLOUDFRONT_KEY_GROUP_ID=$(cat CLOUDFRONT_KEY_GROUP_ID.txt)" >> $GITHUB_ENV
+          echo "PRIVATE_KEY_SECRET_NAME=$(cat CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt)" >> $GITHUB_ENV      
+
+      - name: Debug env vars
+        run: |
+          echo "CLOUDFRONT_KEY_GROUP_ID=$CLOUDFRONT_KEY_GROUP_ID"
+          echo "PRIVATE_KEY_SECRET_NAME=$PRIVATE_KEY_SECRET_NAME"
+
+      - name: Download private key from AWS Secrets Manager
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+        run: |
+          aws secretsmanager get-secret-value --secret-id "$PRIVATE_KEY_SECRET_NAME" --region "$AWS_REGION" --query SecretString --output text > private.pem
+
+
+# from here we are working on the artifact deploy 
+
+      - name: Download $LAMBDA_NAME artifact from S3 build bucket
+        run: |
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/${LAMBDA_NAME}.zip lambda.zip
+
+      - name: Init Terraform
+        working-directory: terraform/mss-stock-data-source
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Format Check
+        working-directory: terraform/mss-stock-data-source
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/mss-stock-data-source
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: terraform/mss-stock-data-source
+        run: |
+          terraform plan \
+            -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
+            -var="data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -var="lambda_name=$LAMBDA_NAME" \
+            -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
+            -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
+            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
+
+      - name: Terraform Import IAM Role
+        working-directory: terraform/mss-stock-data-source
+        run: |
+          terraform import \
+            -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
+            -var="app_data_bucket=$SHARED_DATA_BUCKET" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -var="lambda_name=$LAMBDA_NAME" \
+            -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
+            -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
+            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            aws_iam_role.lambda_role mss-lambda-exec-role
+
+      - name: Terraform Import Lambda Function
+        working-directory: terraform/mss-stock-data-source
+        run: |
+          terraform import \
+            -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
+            -var="app_data_bucket=$SHARED_DATA_BUCKET" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -var="lambda_name=$LAMBDA_NAME" \
+            -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
+            -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
+            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            aws_lambda_function.$LAMBDA_NAME $LAMBDA_NAME
+
+      - name: Terraform Import Lambda Allow Events Permission
+        working-directory: terraform/mss-stock-data-source
+        run: |
+          terraform import \
+            -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
+            -var="app_data_bucket=$SHARED_DATA_BUCKET" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -var="lambda_name=$LAMBDA_NAME" \
+            -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
+            -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
+            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip" \
+            aws_lambda_permission.allow-events $LAMBDA_NAME/AllowExecutionFromCloudWatch
+
+      - name: Terraform apply
+        working-directory: terraform/mss-stock-data-source
+        run: |
+          terraform apply -auto-approve \
+            -var="lambda_version=$MSS_STOCK_DATA_SOURCE_VERSION" \
+            -var="app_data_bucket=$SHARED_DATA_BUCKET" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -var="lambda_name=$LAMBDA_NAME" \
+            -var="cloudfront_key_group_id=$CLOUDFRONT_KEY_GROUP_ID" \
+            -var="alphavantage_api_key=$ALPHAVANTAGE_API_KEY" \
+            -var="artifact_key=deploy/$LAMBDA_NAME/$MSS_STOCK_DATA_SOURCE_VERSION/$LAMBDA_NAME.zip"
