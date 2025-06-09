@@ -121,7 +121,8 @@ jobs:
       - name: Get CloudFront Distribution ID output from Terraform
         id: cf_output
         working-directory: terraform/mss-stock-data-source
-        run: terraform output -raw cloudfront_distribution_id > ../../CLOUDFRONT_DISTRIBUTION_ID.txt
+        run: |
+          terraform output -raw cloudfront_distribution_id 2>&1 | grep "::debug::stdout:" | sed 's/.*::debug::stdout: *//' > ../../CLOUDFRONT_DISTRIBUTION_ID.txt
 
       - name: Upload CloudFront Distribution ID to S3
         run: aws s3 cp CLOUDFRONT_DISTRIBUTION_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DISTRIBUTION_ID.txt --region $AWS_REGION
