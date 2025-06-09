@@ -112,7 +112,7 @@ jobs:
 
       - name: Terraform CloudFront Distribution
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_cloudfront_distribution.cf_distribution $id || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_cloudfront_distribution.cf_distribution $CLOUDFRONT_DISTRIBUTION_ID || true
 
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
