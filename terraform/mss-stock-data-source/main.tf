@@ -1,5 +1,6 @@
 resource "aws_iam_role" "lambda_exec_role" {
   name = "mss-lambda-exec-role"
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{
@@ -11,6 +12,44 @@ resource "aws_iam_role" "lambda_exec_role" {
     }]
   })
 }
+
+resource "aws_iam_role_policy" "lambda_exec_inline_policy" {
+  name = "lambda-exec-policy"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:*"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.app_data_bucket}",
+          "arn:aws:s3:::${var.app_data_bucket}/*"
+        ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_exec_role.name
