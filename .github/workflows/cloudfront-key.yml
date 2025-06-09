@@ -3,6 +3,11 @@ name: CloudFront Key Management
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
 jobs:
   manage-cloudfront-key:
     runs-on: ubuntu-latest

@@ -3,14 +3,19 @@ name: Deploy MSS Stock Data Source Lambda
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
 # github org vars and secrets
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }} # used for app data
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }} # used for build artifacts
+  ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }} # API key for Alpha Vantage
   LAMBDA_NAME: mss-stock-data-source-lambda
   MSS_STOCK_DATA_SOURCE_VERSION: 1.0.0
-  ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }} # API key for Alpha Vantage
 
 # This workflow deploys the MSS Stock Data Source Lambda function.
 jobs:
@@ -20,14 +25,14 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
 # from here we are working on the cloudfront preparation
 
