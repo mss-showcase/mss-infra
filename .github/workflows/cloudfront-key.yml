@@ -34,7 +34,7 @@ jobs:
           terraform_version: 1.7.5
 
       - name: Generate timestamp for resource names
-        id: ts
+        id: current_timestamp
         run: |
           echo "CURRENT_TIMESTAMP=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
@@ -42,6 +42,9 @@ jobs:
         run: |
           openssl genrsa -out private.pem 2048
           openssl rsa -pubout -in private.pem -out public.pem
+
+      - name: List files after key generation
+        run: ls -l
 
       - name: Upload private key to AWS Secrets Manager
         env:
@@ -55,8 +58,7 @@ jobs:
           fi
 
       - name: Prepare Terraform public key file
-        run: |
-          cp public.pem terraform/cloudfront-key/public.pem
+        run: cp public.pem terraform/cloudfront-key/public.pem
 
       - name: Terraform Init
         working-directory: terraform/cloudfront-key
