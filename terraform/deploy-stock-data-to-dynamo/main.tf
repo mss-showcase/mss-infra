@@ -13,10 +13,6 @@ resource "aws_dynamodb_table" "m7_imported_files" {
     name = "file_name"
     type = "S"
   }
-  attribute {
-    name = "ttl"
-    type = "N"
-  }
 
   ttl {
     attribute_name = "ttl"
@@ -37,10 +33,6 @@ resource "aws_dynamodb_table" "m7_ticks" {
   attribute {
     name = "timestamp"
     type = "S"
-  }
-  attribute {
-    name = "ttl"
-    type = "N"
   }
 
   ttl {
