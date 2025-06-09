@@ -1,6 +1,6 @@
 # Add your DynamoDB tables here if not already managed elsewhere
 resource "aws_dynamodb_table" "m7_imported_files" {
-  name         = "m7_imported_files"
+  name         = var.files_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "file_name"
 
@@ -11,7 +11,7 @@ resource "aws_dynamodb_table" "m7_imported_files" {
 }
 
 resource "aws_dynamodb_table" "m7_ticks" {
-  name         = "m7_ticks"
+  name         = var.ticks_table
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "symbol"
   range_key    = "timestamp"
