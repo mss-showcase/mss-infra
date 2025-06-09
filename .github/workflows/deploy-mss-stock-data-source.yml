@@ -47,9 +47,9 @@ jobs:
 
       - name: Set env vars
         run: |
-          echo "CLOUDFRONT_KEY_GROUP_ID=$(cat CLOUDFRONT_KEY_GROUP_ID.txt)" >> $GITHUB_ENV
-          echo "PRIVATE_KEY_SECRET_NAME=$(cat CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt)" >> $GITHUB_ENV
-          echo "CLOUDFRONT_DISTRIBUTION_ID=$(cat CLOUDFRONT_DISTRIBUTION_ID.txt)" >> $GITHUB_ENV
+          echo "CLOUDFRONT_KEY_GROUP_ID=$(tr -d '\n' < CLOUDFRONT_KEY_GROUP_ID.txt)" >> "$GITHUB_ENV"
+          echo "PRIVATE_KEY_SECRET_NAME=$(tr -d '\n' < CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt)" >> "$GITHUB_ENV"
+          echo "CLOUDFRONT_DISTRIBUTION_ID=$(tr -d '\n' < CLOUDFRONT_DISTRIBUTION_ID.txt)" >> "$GITHUB_ENV"
 
       - name: Debug env vars
         run: |
