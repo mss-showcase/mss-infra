@@ -1,4 +1,9 @@
 # Add your DynamoDB tables here if not already managed elsewhere
+
+# The ttl attribute should be a Number (UNIX epoch time in seconds when the item should expire).
+# Your Lambda should set the ttl attribute on items you want to expire.
+# DynamoDB will automatically delete expired items.
+
 resource "aws_dynamodb_table" "m7_imported_files" {
   name         = var.files_table
   billing_mode = "PAY_PER_REQUEST"
@@ -7,6 +12,15 @@ resource "aws_dynamodb_table" "m7_imported_files" {
   attribute {
     name = "file_name"
     type = "S"
+  }
+  attribute {
+    name = "ttl"
+    type = "N"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
   }
 }
 
@@ -23,6 +37,15 @@ resource "aws_dynamodb_table" "m7_ticks" {
   attribute {
     name = "timestamp"
     type = "S"
+  }
+  attribute {
+    name = "ttl"
+    type = "N"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
   }
 }
 
