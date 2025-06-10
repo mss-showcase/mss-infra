@@ -98,6 +98,26 @@ jobs:
             echo "Policy mss_backend_lambda_policy not found, skipping import."
           fi
 
+      - name: Terraform Import API Gateway HTTP API
+        working-directory: terraform/deploy-backend
+        run: |
+          API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
+          if [ -n "$API_ID" ]; then
+            terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_api.mss_backend_api $API_ID || true
+          else
+            echo "API mss-backend-api not found, skipping import."
+          fi
+
+      - name: Terraform Import API Gateway Stage
+        working-directory: terraform/deploy-backend
+        run: |
+          API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
+          if [ -n "$API_ID" ]; then
+            terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_stage.mss_backend_stage "$API_ID/$DEFAULT" || true
+          else
+            echo "API mss-backend-api not found, skipping stage import."
+          fi
+
       - name: Terraform apply
         working-directory: terraform/deploy-backend
         run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
