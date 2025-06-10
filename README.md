@@ -15,4 +15,5 @@ Because the mss-stock-data-source will put its data to S3, that will be behind a
 ## MSS Deploy Data To Dynamo Lambda 
 
 Simply run this workflow, this will deploy it to AWS. The necessary exec roles for this lambda will be set up too.
+
 My first attempt (or idea) was to access stock data through CF, but I change my mind: this lambda put it into DynamoDB (with a 30 days TTL)
