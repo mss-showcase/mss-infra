@@ -8,18 +8,13 @@ variable "shared_data_bucket" {
   type        = string
 }
 
-variable "lambda_name" {
-  description = "Lambda function name"
+variable "mss_backend_lambda_name" {
+  description = "Name of the backend Lambda"
   type        = string
 }
 
-variable "s3_key" {
-  description = "S3 key for Lambda artifact"
-  type        = string
-}
-
-variable "files_table" {
-  description = "DynamoDB table for files"
+variable "mss_backend_lambda_s3_key" {
+  description = "S3 key for the backend Lambda artifact"
   type        = string
 }
 
@@ -28,9 +23,8 @@ variable "ticks_table" {
   type        = string
 }
 
-variable "aws_region" {
-  description = "AWS region"
+variable "ticks_table_arn" {
+  description = "DynamoDB table ARN for ticks (optional, if table is managed elsewhere)"
   type        = string
-  default     = "eu-north-1"
+  default     = null
 }
-

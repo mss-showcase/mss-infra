@@ -1,0 +1,101 @@
+name: Deploy MSS Backend Lambda
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }}
+  SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
+  MSS_BACKEND_LAMBDA_NAME: ${{ vars.MSS_BACKEND_LAMBDA_NAME }}
+  MSS_BACKEND_VERSION: 1.0.0
+  TICKS_TABLE: ${{ vars.TICKS_TABLE }}
+  TICKS_TABLE_ARN: ${{ vars.TICKS_TABLE_ARN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Set Lambda artifact location
+        run: |
+          echo "MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET=deploy/mss-backend-lambda/${MSS_BACKEND_VERSION}/mss-backend-lambda.zip" >> $GITHUB_ENV
+
+      - name: Download $MSS_BACKEND_LAMBDA_NAME artifact from S3 build bucket
+        run: |
+          echo "Downloading $MSS_BACKEND_LAMBDA_NAME artifact from S3 bucket: ${SHARED_BUILD_DATA_BUCKET}, location: ${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET}"
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET} lambda.zip
+
+      - name: Init Terraform
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Format Check
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform validate
+
+      - name: Write Terraform variable file
+        working-directory: terraform/deploy-backend-lambda
+        run: |
+          cat <<EOF > ci.auto.tfvars
+          lambda_name        = "${MSS_BACKEND_LAMBDA_NAME}"
+          build_data_bucket  = "${SHARED_BUILD_DATA_BUCKET}"
+          shared_data_bucket = "${SHARED_DATA_BUCKET}"
+          s3_key             = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
+          ticks_table        = "${TICKS_TABLE}"
+          aws_region         = "${AWS_REGION}"
+          EOF
+
+      - name: Terraform plan
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform plan -input=false -var-file=ci.auto.tfvars
+
+      - name: Terraform Import Lambda Function
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_to_dynamo $MSS_BACKEND_LAMBDA_NAME || true
+
+      - name: Terraform Import Ticks Table
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_dynamodb_table.m7_ticks $TICKS_TABLE || true
+
+      - name: Terraform Import Lambda Exec Role
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.lambda_exec_role ${MSS_BACKEND_LAMBDA_NAME}-exec-role || true
+
+      - name: Terraform Import Lambda Permission
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_s3 ${MSS_BACKEND_LAMBDA_NAME}/AllowExecutionFromS3 || true
+
+      - name: Terraform Import Lambda Policy
+        working-directory: terraform/deploy-backend-lambda
+        run: |
+          POLICY_ARN=$(aws iam list-policies --scope Local --query "Policies[?PolicyName=='m7_lambda_policy'].Arn" --output text)
+          if [ -n "$POLICY_ARN" ]; then
+            terraform import -input=false -var-file=ci.auto.tfvars aws_iam_policy.lambda_policy $POLICY_ARN || true
+          else
+            echo "Policy m7_lambda_policy not found, skipping import."
+          fi
+
+      - name: Terraform apply
+        working-directory: terraform/deploy-backend-lambda
+        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
