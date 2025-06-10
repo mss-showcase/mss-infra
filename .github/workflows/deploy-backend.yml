@@ -35,7 +35,7 @@ jobs:
 
       - name: Set Lambda artifact location
         run: |
-          echo "MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET=deploy/mss-backend-lambda/${MSS_BACKEND_VERSION}/mss-backend-lambda.zip" >> $GITHUB_ENV
+          echo "MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET=deploy/mss-backend/${MSS_BACKEND_VERSION}/mss-backend-lambda.zip" >> $GITHUB_ENV
 
       - name: Download $MSS_BACKEND_LAMBDA_NAME artifact from S3 build bucket
         run: |
