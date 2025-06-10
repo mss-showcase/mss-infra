@@ -64,13 +64,12 @@ jobs:
         working-directory: terraform/deploy-backend
         run: |
           cat <<EOF > ci.auto.tfvars
-          lambda_name        = "${MSS_BACKEND_LAMBDA_NAME}"
+          mss_backend_lambda_name = "${MSS_BACKEND_LAMBDA_NAME}"
+          mss_backend_lambda_s3_key = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
           build_data_bucket  = "${SHARED_BUILD_DATA_BUCKET}"
           shared_data_bucket = "${SHARED_DATA_BUCKET}"
-          s3_key             = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
           ticks_table        = "${TICKS_TABLE}"
           ticks_table_arn    = "${TICKS_TABLE_ARN}"
-          aws_region         = "${AWS_REGION}"
           EOF
 
       - name: Terraform plan
