@@ -54,6 +54,12 @@ jobs:
         working-directory: terraform/deploy-backend
         run: terraform validate
 
+      - name: Fetch TICKS_TABLE_ARN from AWS
+        id: fetch_table_arn
+        run: |
+          ARN=$(aws dynamodb describe-table --table-name "$TICKS_TABLE" --region "$AWS_REGION" --query "Table.TableArn" --output text)
+          echo "TICKS_TABLE_ARN=$ARN" >> $GITHUB_ENV
+
       - name: Write Terraform variable file
         working-directory: terraform/deploy-backend
         run: |
@@ -63,6 +69,7 @@ jobs:
           shared_data_bucket = "${SHARED_DATA_BUCKET}"
           s3_key             = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
           ticks_table        = "${TICKS_TABLE}"
+          ticks_table_arn    = "${TICKS_TABLE_ARN}"
           aws_region         = "${AWS_REGION}"
           EOF
 

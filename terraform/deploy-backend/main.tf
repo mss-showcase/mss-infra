@@ -43,7 +43,7 @@ resource "aws_iam_policy" "mss_backend_lambda_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ],
-        Resource = var.ticks_table_arn != null ? var.ticks_table_arn : aws_dynamodb_table.m7_ticks.arn
+        Resource = [var.ticks_table_arn]
       }
     ]
   })
