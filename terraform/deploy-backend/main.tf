@@ -83,6 +83,20 @@ resource "aws_apigatewayv2_stage" "mss_backend_stage" {
   api_id      = aws_apigatewayv2_api.mss_backend_api.id
   name        = "$default"
   auto_deploy = true
+
+  default_route_settings {
+    throttling_burst_limit = 5000
+    throttling_rate_limit  = 10000
+  }
+
+  # CORS configuration for HTTP API
+  cors_configuration {
+    allow_origins = ["http://localhost:5173"]
+    allow_methods = ["GET", "OPTIONS"]
+    allow_headers = ["*"]
+    expose_headers = ["*"]
+    max_age = 86400
+  }
 }
 
 resource "aws_lambda_permission" "apigw_invoke" {
