@@ -57,6 +57,14 @@ resource "aws_iam_role_policy_attachment" "mss_backend_lambda_custom" {
 resource "aws_apigatewayv2_api" "mss_backend_api" {
   name          = "mss-backend-api"
   protocol_type = "HTTP"
+
+  cors_configuration {
+    allow_origins  = ["http://localhost:5173"]
+    allow_methods  = ["GET", "OPTIONS"]
+    allow_headers  = ["*"]
+    expose_headers = ["*"]
+    max_age        = 86400
+  }
 }
 
 resource "aws_apigatewayv2_integration" "mss_backend_lambda_integration" {
@@ -87,15 +95,6 @@ resource "aws_apigatewayv2_stage" "mss_backend_stage" {
   default_route_settings {
     throttling_burst_limit = 5000
     throttling_rate_limit  = 10000
-  }
-
-  # CORS configuration for HTTP API
-  cors_configuration {
-    allow_origins  = ["http://localhost:5173"]
-    allow_methods  = ["GET", "OPTIONS"]
-    allow_headers  = ["*"]
-    expose_headers = ["*"]
-    max_age        = 86400
   }
 }
 
