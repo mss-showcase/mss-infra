@@ -83,7 +83,7 @@ resource "aws_apigatewayv2_route" "stocks_route" {
 
 resource "aws_apigatewayv2_route" "ticks_route" {
   api_id    = aws_apigatewayv2_api.mss_backend_api.id
-  route_key = "GET /ticks"
+  route_key = "GET /ticks/{symbol}"
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 
