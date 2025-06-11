@@ -91,11 +91,11 @@ resource "aws_apigatewayv2_stage" "mss_backend_stage" {
 
   # CORS configuration for HTTP API
   cors_configuration {
-    allow_origins = ["http://localhost:5173"]
-    allow_methods = ["GET", "OPTIONS"]
-    allow_headers = ["*"]
+    allow_origins  = ["http://localhost:5173"]
+    allow_methods  = ["GET", "OPTIONS"]
+    allow_headers  = ["*"]
     expose_headers = ["*"]
-    max_age = 86400
+    max_age        = 86400
   }
 }
 
