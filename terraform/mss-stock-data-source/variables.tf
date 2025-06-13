@@ -15,11 +15,6 @@ variable "artifact_key" {
   type        = string
 }
 
-variable "cloudfront_key_group_id" {
-  description = "value of the CloudFront key group ID for signed URLs"
-  type        = string
-}
-
 variable "lambda_name" {
   description = "value of the Lambda function name"
   type        = string
