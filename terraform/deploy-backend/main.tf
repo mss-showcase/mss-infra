@@ -59,7 +59,10 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins  = ["http://localhost:5173"]
+    allow_origins  = [
+      "http://localhost:5173",
+      "http://mss-webhosting-bucket.s3-website.eu-north-1.amazonaws.com"
+    ]
     allow_methods  = ["GET", "OPTIONS"]
     allow_headers  = ["*"]
     expose_headers = ["*"]
