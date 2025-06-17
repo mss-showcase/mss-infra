@@ -85,15 +85,15 @@ jobs:
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $TICKS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       # Import for Fundamentals Lambda
-      - name: Terraform Import Fundamentals Lambda IAM Role
+      - name: Terraform Import Lambda IAM Role (fundamentals)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.fundamentals_lambda_exec_role mss-fundamentals-lambda-exec-role || true
 
-      - name: Terraform Import Fundamentals Lambda Function
+      - name: Terraform Import Lambda Function (fundamentals)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.fundamentals_lambda $FUNDAMENTALS_LAMBDA_NAME || true
 
-      - name: Terraform Import Fundamentals Lambda Allow Events Permission
+      - name: Terraform Import Lambda Allow Events Permission (fundamentals)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.fundamentals_allow_events $FUNDAMENTALS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
