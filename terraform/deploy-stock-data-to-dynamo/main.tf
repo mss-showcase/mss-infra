@@ -51,13 +51,9 @@ resource "aws_dynamodb_table" "m7_fundamentals" {
     name = "symbol"
     type = "S"
   }
-  attribute {
-    name = "as_of"
-    type = "S"
-  }
 
   attribute {
-    name = "timestamp"
+    name = "as_of"
     type = "S"
   }
 
