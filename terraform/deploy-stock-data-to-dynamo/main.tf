@@ -41,6 +41,32 @@ resource "aws_dynamodb_table" "m7_ticks" {
   }
 }
 
+resource "aws_dynamodb_table" "m7_fundamentals" {
+  name         = var.fundamentals_table
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "symbol"
+  range_key    = "as_of"
+
+  attribute {
+    name = "symbol"
+    type = "S"
+  }
+  attribute {
+    name = "as_of"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+}
+
 resource "aws_iam_policy" "lambda_policy" {
   name = "m7_lambda_policy"
   policy = jsonencode({
@@ -55,7 +81,8 @@ resource "aws_iam_policy" "lambda_policy" {
         ]
         Resource = [
           aws_dynamodb_table.m7_imported_files.arn,
-          aws_dynamodb_table.m7_ticks.arn
+          aws_dynamodb_table.m7_ticks.arn,
+          aws_dynamodb_table.m7_fundamentals.arn
         ]
       },
       {
@@ -92,6 +119,7 @@ resource "aws_lambda_function" "stock_data_to_dynamo" {
     variables = {
       FILES_TABLE = var.files_table
       TICKS_TABLE = var.ticks_table
+      FUNDAMENTALS_TABLE = var.fundamentals_table
     }
   }
 }

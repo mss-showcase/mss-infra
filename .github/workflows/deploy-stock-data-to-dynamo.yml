@@ -16,6 +16,7 @@ env:
   MSS_STOCK_DATA_TO_DYNAMO_VERSION: 1.0.0
   FILES_TABLE: ${{ vars.FILES_TABLE }}
   TICKS_TABLE: ${{ vars.TICKS_TABLE }}
+  FUNDAMENTALS_TABLE: ${{ vars.FUNDAMENTALS_TABLE }}
 
 jobs:
   deploy:
@@ -64,6 +65,7 @@ jobs:
           s3_key             = "${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET#'/'}"
           files_table        = "${FILES_TABLE}"
           ticks_table        = "${TICKS_TABLE}"
+          fundamentals_table = "${FUNDAMENTALS_TABLE}"
           aws_region         = "${AWS_REGION}"
           EOF
 
@@ -82,6 +84,10 @@ jobs:
       - name: Terraform Import Ticks Table
         working-directory: terraform/deploy-stock-data-to-dynamo
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_dynamodb_table.m7_ticks $TICKS_TABLE || true
+
+      - name: Terraform Import Fundamentals Table
+        working-directory: terraform/deploy-stock-data-to-dynamo
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_dynamodb_table.m7_fundamentals $FUNDAMENTALS_TABLE || true
 
       - name: Terraform Import Lambda Exec Role
         working-directory: terraform/deploy-stock-data-to-dynamo
