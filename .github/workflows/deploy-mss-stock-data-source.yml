@@ -62,9 +62,10 @@ jobs:
           lambda_name               = "${TICKS_LAMBDA_NAME}"
           alphavantage_api_key      = "${ALPHAVANTAGE_API_KEY}"
           artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
+          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
           EOF
 
-      - name: Terraform plan
+      - name: Terraform plan (ticks)
         working-directory: terraform/mss-stock-data-source
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
@@ -93,6 +94,7 @@ jobs:
           build_data_bucket           = "${SHARED_BUILD_DATA_BUCKET}"
           fundamentals_lambda_name    = "${FUNDAMENTALS_LAMBDA_NAME}"
           alphavantage_api_key        = "${ALPHAVANTAGE_API_KEY}"
+          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
           fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
           run_mode_fundamentals       = "fundamentals"
           EOF
