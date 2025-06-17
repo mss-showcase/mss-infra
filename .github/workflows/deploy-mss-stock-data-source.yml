@@ -38,7 +38,7 @@ jobs:
 
       - name: Download $TICKS_LAMBDA_NAME and $FUNDAMENTALS_LAMBDA_NAME artifact from S3 build bucket (The same artifact is used for both lambdas)
         run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}.zip $LOCAL_LAMBDA_FILE.zip
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET} $LOCAL_LAMBDA_FILE.zip
 
       - name: Init Terraform
         working-directory: terraform/mss-stock-data-source
@@ -61,8 +61,8 @@ jobs:
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
           lambda_name               = "${TICKS_LAMBDA_NAME}"
           alphavantage_api_key      = "${ALPHAVANTAGE_API_KEY}"
-          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
-          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
+          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
           EOF
 
       - name: Terraform plan (ticks)
@@ -94,8 +94,8 @@ jobs:
           build_data_bucket           = "${SHARED_BUILD_DATA_BUCKET}"
           fundamentals_lambda_name    = "${FUNDAMENTALS_LAMBDA_NAME}"
           alphavantage_api_key        = "${ALPHAVANTAGE_API_KEY}"
-          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
-          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LOCAL_LAMBDA_FILE}.zip"
+          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
           run_mode_fundamentals       = "fundamentals"
           EOF
 
