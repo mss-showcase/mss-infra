@@ -94,6 +94,12 @@ resource "aws_apigatewayv2_route" "ticks_route" {
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 
+resource "aws_apigatewayv2_route" "fundamentals_route" {
+  api_id    = aws_apigatewayv2_api.mss_backend_api.id
+  route_key = "GET /fundamentals/{symbol}"
+  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+}
+
 resource "aws_apigatewayv2_stage" "mss_backend_stage" {
   api_id      = aws_apigatewayv2_api.mss_backend_api.id
   name        = "$default"
