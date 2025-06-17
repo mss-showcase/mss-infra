@@ -38,7 +38,7 @@ jobs:
         run: |
           echo "MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET=deploy/mss-stock-data-to-dynamo/${MSS_STOCK_DATA_TO_DYNAMO_VERSION}/mss-stock-data-to-dynamo.zip" >> $GITHUB_ENV
 
-      - name: Download $LAMBDA_NAME artifact from S3 build bucket
+      - name: Download zip artifact from S3 build bucket
         run: |
           echo "Downloading $LAMBDA_NAME artifact from S3 bucket: ${SHARED_BUILD_DATA_BUCKET}, location: ${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET}"
           aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/${MSS_STOCK_DATA_TO_DYNAMO_LOCATION_ON_BUCKET} lambda.zip

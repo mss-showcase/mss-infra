@@ -10,6 +10,7 @@ resource "aws_lambda_function" "mss_backend_lambda" {
   environment {
     variables = {
       TICKS_TABLE = var.ticks_table
+      FUNDAMENTALS_TABLE = var.fundamentals_table
     }
   }
 }
@@ -43,7 +44,10 @@ resource "aws_iam_policy" "mss_backend_lambda_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ],
-        Resource = [var.ticks_table_arn]
+        Resource = [
+          var.ticks_table_arn,
+          var.fundamentals_table_arn
+        ]
       }
     ]
   })

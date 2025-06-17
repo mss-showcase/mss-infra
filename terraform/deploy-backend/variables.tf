@@ -23,8 +23,19 @@ variable "ticks_table" {
   type        = string
 }
 
+variable "fundamentals_table" {
+  description = "DynamoDB table for fundamentals"
+  type        = string
+}
+
 variable "ticks_table_arn" {
   description = "DynamoDB table ARN for ticks (optional, if table is managed elsewhere)"
+  type        = string
+  default     = null
+}
+
+variable "fundamentals_table_arn" {
+  description = "DynamoDB table ARN for fundamentals (optional, if table is managed elsewhere)"
   type        = string
   default     = null
 }
