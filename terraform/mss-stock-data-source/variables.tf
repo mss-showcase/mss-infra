@@ -21,6 +21,18 @@ variable "lambda_name" {
   default     = "mss-stock-data-source-lambda"
 }
 
+variable run_mode_ticks{
+  description = "Ticks Run mode for the Stock data source Lambda function: it can be 'ticks' or 'funcdamentals'"
+  type        = string
+  default     = "ticks"
+}
+
+variable run_mode_fundamentals {
+  description = "Ticks Run mode for the Stock data source Lambda function: it can be 'ticks' or 'fundamentals'"
+  type        = string
+  default     = "fundamentals"
+}
+
 variable "alphavantage_api_key" {
   description = "value of the Alpha Vantage API key"
   type        = string
@@ -33,6 +45,17 @@ variable "build_data_bucket" {
 
 variable "app_data_bucket" {
   description = "S3 bucket for application data (CloudFront origin)"
+  type        = string
+}
+
+variable "fundamentals_lambda_name" {
+  description = "Name of the fundamentals Lambda function"
+  type        = string
+  default     = "mss-fundamentals-lambda"
+}
+
+variable "fundamentals_artifact_key" {
+  description = "S3 key for the fundamentals Lambda artifact"
   type        = string
 }
 
