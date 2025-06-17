@@ -31,7 +31,7 @@ variable "ticks_table" {
 variable "fundamentals_table" {
   description = "DynamoDB table for fundamentals"
   type        = string
-  
+
 }
 
 variable "aws_region" {

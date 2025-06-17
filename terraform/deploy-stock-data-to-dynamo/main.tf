@@ -117,8 +117,8 @@ resource "aws_lambda_function" "stock_data_to_dynamo" {
 
   environment {
     variables = {
-      FILES_TABLE = var.files_table
-      TICKS_TABLE = var.ticks_table
+      FILES_TABLE        = var.files_table
+      TICKS_TABLE        = var.ticks_table
       FUNDAMENTALS_TABLE = var.fundamentals_table
     }
   }
