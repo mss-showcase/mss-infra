@@ -1,4 +1,4 @@
-name: Deploy MSS Stock Data Source Lambda
+name: Deploy MSS Stock Tick and Fundamentals Data Collector Lambdas
 
 on:
   workflow_dispatch:
