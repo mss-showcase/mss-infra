@@ -8,7 +8,6 @@ permissions:
   contents: read
   actions: read
 
-# github org vars and secrets
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }}
@@ -36,7 +35,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Download $TICKS_LAMBDA_NAME and $FUNDAMENTALS_LAMBDA_NAME artifact from S3 build bucket (The same artifact is used for both lambdas)
+      - name: Download Lambda artifact from S3 build bucket (used for both lambdas)
         run: |
           aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET} $LOCAL_LAMBDA_FILE.zip
 
@@ -52,7 +51,7 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: terraform validate
 
-      - name: Write Terraform variable file
+      - name: Write Terraform variable file for both lambdas
         working-directory: terraform/mss-stock-data-source
         run: |
           cat <<EOF > ci.auto.tfvars
@@ -60,61 +59,44 @@ jobs:
           app_data_bucket           = "${SHARED_DATA_BUCKET}"
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
           lambda_name               = "${TICKS_LAMBDA_NAME}"
+          fundamentals_lambda_name  = "${FUNDAMENTALS_LAMBDA_NAME}"
           alphavantage_api_key      = "${ALPHAVANTAGE_API_KEY}"
           artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
-          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          fundamentals_artifact_key = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          run_mode_ticks            = "ticks"
+          run_mode_fundamentals     = "fundamentals"
           EOF
 
-      - name: Terraform plan (ticks)
+      - name: Terraform plan
         working-directory: terraform/mss-stock-data-source
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
-      - name: Terraform Import IAM Role
+      # Import for Ticks Lambda
+      - name: Terraform Import IAM Role (ticks)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.lambda_exec_role mss-lambda-exec-role || true
 
-      - name: Terraform Import Lambda Function
+      - name: Terraform Import Lambda Function (ticks)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_lambda $TICKS_LAMBDA_NAME || true
 
-      - name: Terraform Import Lambda Allow Events Permission
+      - name: Terraform Import Lambda Allow Events Permission (ticks)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $TICKS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+
+      # Import for Fundamentals Lambda
+      - name: Terraform Import Fundamentals Lambda IAM Role
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.fundamentals_lambda_exec_role mss-fundamentals-lambda-exec-role || true
+
+      - name: Terraform Import Fundamentals Lambda Function
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.fundamentals_lambda $FUNDAMENTALS_LAMBDA_NAME || true
+
+      - name: Terraform Import Fundamentals Lambda Allow Events Permission
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.fundamentals_allow_events $FUNDAMENTALS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
         run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
-
-      - name: Write Terraform variable file for fundamentals lambda
-        working-directory: terraform/mss-stock-data-source
-        run: |
-          cat <<EOF > ci.fundamentals.auto.tfvars
-          lambda_version              = "${MSS_STOCK_DATA_SOURCE_VERSION}"
-          app_data_bucket             = "${SHARED_DATA_BUCKET}"
-          build_data_bucket           = "${SHARED_BUILD_DATA_BUCKET}"
-          fundamentals_lambda_name    = "${FUNDAMENTALS_LAMBDA_NAME}"
-          alphavantage_api_key        = "${ALPHAVANTAGE_API_KEY}"
-          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
-          fundamentals_artifact_key   = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
-          run_mode_fundamentals       = "fundamentals"
-          EOF
-
-      - name: Terraform plan (fundamentals)
-        working-directory: terraform/mss-stock-data-source
-        run: terraform plan -input=false -var-file=ci.fundamentals.auto.tfvars
-
-      - name: Terraform Import Fundamentals Lambda IAM Role
-        working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.fundamentals.auto.tfvars aws_iam_role.fundamentals_lambda_exec_role mss-fundamentals-lambda-exec-role || true
-
-      - name: Terraform Import Fundamentals Lambda Function
-        working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.fundamentals.auto.tfvars aws_lambda_function.fundamentals_lambda $FUNDAMENTALS_LAMBDA_NAME || true
-
-      - name: Terraform Import Fundamentals Lambda Allow Events Permission
-        working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.fundamentals.auto.tfvars aws_lambda_permission.fundamentals_allow_events $FUNDAMENTALS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
-
-      - name: Terraform apply (fundamentals)
-        working-directory: terraform/mss-stock-data-source
-        run: terraform apply -input=false -auto-approve -var-file=ci.fundamentals.auto.tfvars
