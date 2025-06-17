@@ -9,7 +9,7 @@ resource "aws_lambda_function" "mss_backend_lambda" {
 
   environment {
     variables = {
-      TICKS_TABLE = var.ticks_table
+      TICKS_TABLE        = var.ticks_table
       FUNDAMENTALS_TABLE = var.fundamentals_table
     }
   }
