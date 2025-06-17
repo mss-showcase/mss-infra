@@ -69,7 +69,7 @@ resource "aws_lambda_function" "stock_data_lambda" {
     variables = {
       ALPHAVANTAGE_API_KEY = var.alphavantage_api_key
       SHARED_DATA_BUCKET   = var.app_data_bucket
-      RUN_MODE            = var.run_mode_ticks
+      RUN_MODE             = var.run_mode_ticks
     }
   }
 }

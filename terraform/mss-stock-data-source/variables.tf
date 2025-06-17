@@ -21,13 +21,13 @@ variable "lambda_name" {
   default     = "mss-stock-data-source-lambda"
 }
 
-variable run_mode_ticks{
+variable "run_mode_ticks" {
   description = "Ticks Run mode for the Stock data source Lambda function: it can be 'ticks' or 'funcdamentals'"
   type        = string
   default     = "ticks"
 }
 
-variable run_mode_fundamentals {
+variable "run_mode_fundamentals" {
   description = "Ticks Run mode for the Stock data source Lambda function: it can be 'ticks' or 'fundamentals'"
   type        = string
   default     = "fundamentals"
