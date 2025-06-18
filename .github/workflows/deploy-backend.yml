@@ -16,16 +16,18 @@ env:
   MSS_BACKEND_VERSION: 1.0.0
   TICKS_TABLE: ${{ vars.TICKS_TABLE }}
   TICKS_TABLE_ARN: ${{ vars.TICKS_TABLE_ARN }}
+  FUNDAMENTALS_TABLE: ${{ vars.FUNDAMENTALS_TABLE }}
+  FUNDAMENTALS_TABLE_ARN: ${{ vars.FUNDAMENTALS_TABLE_ARN }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -70,6 +72,8 @@ jobs:
           shared_data_bucket = "${SHARED_DATA_BUCKET}"
           ticks_table        = "${TICKS_TABLE}"
           ticks_table_arn    = "${TICKS_TABLE_ARN}"
+          fundamentals_table = "${FUNDAMENTALS_TABLE}"
+          fundamentals_table_arn = "${FUNDAMENTALS_TABLE_ARN}"  
           EOF
 
       - name: Terraform plan
@@ -133,6 +137,21 @@ jobs:
               terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.ticks_route "$API_ID/$ROUTE_ID" || true
             else
               echo "Route GET /ticks/{symbol} not found, skipping import."
+            fi
+          else
+            echo "API mss-backend-api not found, skipping route import."
+          fi
+
+      - name: Terraform Import API Gateway Route /fundamentals/{symbol}
+        working-directory: terraform/deploy-backend
+        run: |
+          API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
+          if [ -n "$API_ID" ]; then
+            ROUTE_ID=$(aws apigatewayv2 get-routes --api-id "$API_ID" --region "$AWS_REGION" --query "Items[?RouteKey=='GET /fundamentals/{symbol}'].RouteId" --output text)
+            if [ -n "$ROUTE_ID" ]; then
+              terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.fundamentals_route "$API_ID/$ROUTE_ID" || true
+            else
+              echo "Route GET /fundamentals/{symbol} not found, skipping import."
             fi
           else
             echo "API mss-backend-api not found, skipping route import."

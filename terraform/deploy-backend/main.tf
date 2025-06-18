@@ -9,7 +9,8 @@ resource "aws_lambda_function" "mss_backend_lambda" {
 
   environment {
     variables = {
-      TICKS_TABLE = var.ticks_table
+      TICKS_TABLE        = var.ticks_table
+      FUNDAMENTALS_TABLE = var.fundamentals_table
     }
   }
 }
@@ -43,7 +44,10 @@ resource "aws_iam_policy" "mss_backend_lambda_policy" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ],
-        Resource = [var.ticks_table_arn]
+        Resource = [
+          var.ticks_table_arn,
+          var.fundamentals_table_arn
+        ]
       }
     ]
   })
@@ -59,7 +63,10 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins  = ["http://localhost:5173"]
+    allow_origins = [
+      "http://localhost:5173",
+      "http://mss-webhosting-bucket.s3-website.eu-north-1.amazonaws.com"
+    ]
     allow_methods  = ["GET", "OPTIONS"]
     allow_headers  = ["*"]
     expose_headers = ["*"]
@@ -84,6 +91,12 @@ resource "aws_apigatewayv2_route" "stocks_route" {
 resource "aws_apigatewayv2_route" "ticks_route" {
   api_id    = aws_apigatewayv2_api.mss_backend_api.id
   route_key = "GET /ticks/{symbol}"
+  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "fundamentals_route" {
+  api_id    = aws_apigatewayv2_api.mss_backend_api.id
+  route_key = "GET /fundamentals/{symbol}"
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 

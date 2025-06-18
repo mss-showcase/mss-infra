@@ -28,6 +28,12 @@ variable "ticks_table" {
   type        = string
 }
 
+variable "fundamentals_table" {
+  description = "DynamoDB table for fundamentals"
+  type        = string
+
+}
+
 variable "aws_region" {
   description = "AWS region"
   type        = string

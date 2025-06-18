@@ -1,4 +1,4 @@
-name: Deploy MSS Stock Data Source Lambda
+name: Deploy MSS Stock Tick and Fundamentals Data Collector Lambdas
 
 on:
   workflow_dispatch:
@@ -8,24 +8,26 @@ permissions:
   contents: read
   actions: read
 
-# github org vars and secrets
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }}
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
   ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
-  LAMBDA_NAME: ${{ vars.MSS_STOCK_DATA_SOURCE_LAMBDA_NAME }}
+  TICKS_LAMBDA_NAME: ${{ vars.MSS_STOCK_DATA_SOURCE_LAMBDA_NAME }}
+  FUNDAMENTALS_LAMBDA_NAME: ${{ vars.MSS_STOCK_FUNDA_DATA_SOURCE_LAMBDA_NAME }}
   MSS_STOCK_DATA_SOURCE_VERSION: 1.0.0
+  LAMBDA_ZIP_IN_BUILD_BUCKET: ${{ vars.FILENAME_OF_STOCK_DATA_LAMBDAS_ON_S3_BUILD_BUCKET }}
+  LOCAL_LAMBDA_FILE: lambda.zip
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -33,9 +35,9 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Download $LAMBDA_NAME artifact from S3 build bucket
+      - name: Download Lambda artifact from S3 build bucket (used for both lambdas)
         run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/$MSS_STOCK_DATA_SOURCE_VERSION/${LAMBDA_NAME}.zip lambda.zip
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET} $LOCAL_LAMBDA_FILE.zip
 
       - name: Init Terraform
         working-directory: terraform/mss-stock-data-source
@@ -49,33 +51,51 @@ jobs:
         working-directory: terraform/mss-stock-data-source
         run: terraform validate
 
-      - name: Write Terraform variable file
+      - name: Write Terraform variable file for both lambdas
         working-directory: terraform/mss-stock-data-source
         run: |
           cat <<EOF > ci.auto.tfvars
           lambda_version            = "${MSS_STOCK_DATA_SOURCE_VERSION}"
           app_data_bucket           = "${SHARED_DATA_BUCKET}"
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
-          lambda_name               = "${LAMBDA_NAME}"
+          lambda_name               = "${TICKS_LAMBDA_NAME}"
+          fundamentals_lambda_name  = "${FUNDAMENTALS_LAMBDA_NAME}"
           alphavantage_api_key      = "${ALPHAVANTAGE_API_KEY}"
-          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_NAME}.zip"
+          artifact_key              = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          fundamentals_artifact_key = "deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET}"
+          run_mode_ticks            = "ticks"
+          run_mode_fundamentals     = "fundamentals"
           EOF
 
       - name: Terraform plan
         working-directory: terraform/mss-stock-data-source
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
-      - name: Terraform Import IAM Role
+      # Import for Ticks Lambda
+      - name: Terraform Import IAM Role (ticks)
         working-directory: terraform/mss-stock-data-source
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.lambda_exec_role mss-lambda-exec-role || true
 
-      - name: Terraform Import Lambda Function
+      - name: Terraform Import Lambda Function (ticks)
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_lambda $LAMBDA_NAME || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_lambda $TICKS_LAMBDA_NAME || true
 
-      - name: Terraform Import Lambda Allow Events Permission
+      - name: Terraform Import Lambda Allow Events Permission (ticks)
         working-directory: terraform/mss-stock-data-source
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $TICKS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+
+      # Import for Fundamentals Lambda
+      - name: Terraform Import Lambda IAM Role (fundamentals)
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.fundamentals_lambda_exec_role mss-fundamentals-lambda-exec-role || true
+
+      - name: Terraform Import Lambda Function (fundamentals)
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.fundamentals_lambda $FUNDAMENTALS_LAMBDA_NAME || true
+
+      - name: Terraform Import Lambda Allow Events Permission (fundamentals)
+        working-directory: terraform/mss-stock-data-source
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.fundamentals_allow_events $FUNDAMENTALS_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       - name: Terraform apply
         working-directory: terraform/mss-stock-data-source
