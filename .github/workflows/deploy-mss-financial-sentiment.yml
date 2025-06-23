@@ -1,0 +1,89 @@
+name: Deploy MSS Stock Sentiment Analyzer Lambda
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
+  MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME: ${{ vars.MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME }}
+  DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
+  DYNAMODB_SENTIMENT_FEEDS_TABLE: ${{ vars.DYNAMODB_SENTIMENT_FEEDS_TABLE }}
+  LOCAL_LAMBDA_FILE: mss-sentiments-lambda.zip
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Download Lambda artifact from S3 build bucket (used for both lambdas)
+        run: |
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}.zip $LOCAL_LAMBDA_FILE.zip
+
+      - name: Init Terraform
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Format Check
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform validate
+
+      - name: Write Terraform variable file for both lambdas
+        working-directory: terraform/deploy-financial-sentiment
+        run: |
+          cat <<EOF > ci.auto.tfvars
+          build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
+          sentiment_lambda_name               = "${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}"
+          articles_table        = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
+          feeds_table        = "${DYNAMODB_SENTIMENT_FEEDS_TABLE}"
+          aws_region         = "${AWS_REGION}"
+          artifact_key              = "deploy/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}.zip"
+          EOF
+
+      - name: Terraform plan
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform plan -input=false -var-file=ci.auto.tfvars
+
+      - name: Terraform Import IAM Role 
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.sentiment_lambda_exec_role sentiment-lambda-exec-role || true
+
+      - name: Terraform Import Lambda Function 
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.sentiment_lambda $MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME || true
+
+      - name: Terraform Import Lambda Allow Events Permission
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+
+      - name: Terraform Import Articles Table
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_dynamodb_table.articles_table $DYNAMODB_SENTIMENT_ARTICLES_TABLE || true
+
+      - name: Terraform Import Feeds Table
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_dynamodb_table.feeds_table $DYNAMODB_SENTIMENT_FEEDS_TABLE || true
+
+      - name: Terraform apply
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
