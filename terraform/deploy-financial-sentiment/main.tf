@@ -60,7 +60,7 @@ resource "aws_lambda_function" "sentiment_lambda" {
   function_name = var.sentiment_lambda_name
   s3_bucket     = var.build_data_bucket
   s3_key        = var.artifact_key
-  handler       = "handler.lambda_handler"   # <--- handler.py, function: lambda_handler
+  handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
   runtime       = "python3.11"
   role          = aws_iam_role.sentiment_lambda_exec_role.arn
   timeout       = 60
