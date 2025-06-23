@@ -51,6 +51,17 @@ resource "aws_iam_role_policy" "sentiment_lambda_exec_inline_policy" {
           "s3:GetObject"
         ],
         Resource = "arn:aws:s3:::${var.build_data_bucket}/*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.shared_data_bucket}",
+          "arn:aws:s3:::${var.shared_data_bucket}/*"
+        ]
       }
     ]
   })

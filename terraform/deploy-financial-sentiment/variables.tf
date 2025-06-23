@@ -1,3 +1,8 @@
+variable "shared_data_bucket" {
+  description = "The name of the shared S3 data bucket"
+  type        = string
+}
+
 variable "build_data_bucket" {
   description = "S3 bucket for Lambda artifact"
   type        = string

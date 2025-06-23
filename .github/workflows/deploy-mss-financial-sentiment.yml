@@ -10,6 +10,7 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
+  SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }}
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
   MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME: ${{ vars.MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
@@ -53,6 +54,7 @@ jobs:
         run: |
           cat <<EOF > ci.auto.tfvars
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
+          shared_data_bucket = "${SHARED_DATA_BUCKET}"
           sentiment_lambda_name               = "${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}"
           articles_table        = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
           feeds_table        = "${DYNAMODB_SENTIMENT_FEEDS_TABLE}"
