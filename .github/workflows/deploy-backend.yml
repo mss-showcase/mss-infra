@@ -124,7 +124,7 @@ jobs:
           fi
 
           declare -A ROUTES=(
-            [stocks]="GET /stocks"
+            [stocks_route]="GET /stocks"
             [ticks_route]="GET /ticks/{symbol}"
             [fundamentals_route]="GET /fundamentals/{symbol}"
             [analysis_ta_stockmarkers_route]="GET /analysis/ta/stockmarkers"
