@@ -1,3 +1,8 @@
+# ARN for the sentiment articles DynamoDB table
+variable "dynamodb_sentiment_articles_table_arn" {
+  description = "ARN of the DynamoDB table for sentiment articles"
+  type        = string
+}
 variable "build_data_bucket" {
   description = "S3 bucket for Lambda artifact"
   type        = string

@@ -47,7 +47,8 @@ resource "aws_iam_policy" "mss_backend_lambda_policy" {
         ],
         Resource = [
           var.ticks_table_arn,
-          var.fundamentals_table_arn
+          var.fundamentals_table_arn,
+          var.dynamodb_sentiment_articles_table_arn
         ]
       }
     ]
