@@ -51,7 +51,7 @@ resource "aws_iam_role_policy" "sentiment_lambda_exec_inline_policy" {
           "s3:GetObject"
         ],
         Resource = "arn:aws:s3:::${var.build_data_bucket}/*"
-      },      {
+        }, {
         Effect = "Allow",
         Action = [
           "s3:GetObject",
@@ -84,9 +84,9 @@ resource "aws_iam_role_policy" "sentiment_lambda_exec_inline_policy" {
 }
 
 resource "aws_sqs_queue" "sentiment_queue" {
-  name                      = "${var.feed_reader_lambda_name}-queue"
+  name                       = "${var.feed_reader_lambda_name}-queue"
   visibility_timeout_seconds = 300
-  message_retention_seconds = 604800 # 7 days
+  message_retention_seconds  = 604800 # 7 days
 }
 
 resource "aws_lambda_function" "feed_reader_lambda" {
@@ -108,13 +108,13 @@ resource "aws_lambda_function" "feed_reader_lambda" {
 }
 
 resource "aws_lambda_function" "financial_sentiment_lambda" {
-  function_name = var.financial_sentiment_lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.artifact_key
-  handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime       = "python3.11"
-  role          = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout       = 300
+  function_name                  = var.financial_sentiment_lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.artifact_key
+  handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
+  runtime                        = "python3.11"
+  role                           = aws_iam_role.sentiment_lambda_exec_role.arn
+  timeout                        = 300
   reserved_concurrent_executions = 2
   environment {
     variables = {
@@ -127,9 +127,9 @@ resource "aws_lambda_function" "financial_sentiment_lambda" {
 }
 
 resource "aws_lambda_event_source_mapping" "sqs_to_sentiment_lambda" {
-  event_source_arn = aws_sqs_queue.sentiment_queue.arn
-  function_name    = aws_lambda_function.financial_sentiment_lambda.arn
-  batch_size       = 1
+  event_source_arn                   = aws_sqs_queue.sentiment_queue.arn
+  function_name                      = aws_lambda_function.financial_sentiment_lambda.arn
+  batch_size                         = 1
   maximum_batching_window_in_seconds = 5
 }
 
