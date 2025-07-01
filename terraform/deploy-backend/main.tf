@@ -9,8 +9,8 @@ resource "aws_lambda_function" "mss_backend_lambda" {
 
   environment {
     variables = {
-      TICKS_TABLE        = var.ticks_table
-      FUNDAMENTALS_TABLE = var.fundamentals_table
+      TICKS_TABLE                       = var.ticks_table
+      FUNDAMENTALS_TABLE                = var.fundamentals_table
       DYNAMODB_SENTIMENT_ARTICLES_TABLE = var.dynamodb_sentiment_articles_table
     }
   }
