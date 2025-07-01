@@ -12,6 +12,8 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }}
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
+  FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET: ${{ vars.FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET }}
+  MSS_FEED_READER_LAMBDA_NAME: ${{ vars.MSS_FEED_READER_LAMBDA_NAME }}
   MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME: ${{ vars.MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
   DYNAMODB_SENTIMENT_FEEDS_TABLE: ${{ vars.DYNAMODB_SENTIMENT_FEEDS_TABLE }}
@@ -35,7 +37,7 @@ jobs:
 
       - name: Download Lambda artifact from S3 build bucket (used for both lambdas)
         run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}.zip $LOCAL_LAMBDA_FILE.zip
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/deploy/$FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET/$FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET.zip $LOCAL_LAMBDA_FILE.zip
 
       - name: Init Terraform
         working-directory: terraform/deploy-financial-sentiment
@@ -55,11 +57,12 @@ jobs:
           cat <<EOF > ci.auto.tfvars
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
           shared_data_bucket = "${SHARED_DATA_BUCKET}"
-          sentiment_lambda_name               = "${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}"
+          feed_reader_lambda_name               = "${MSS_FEED_READER_LAMBDA_NAME}"
+          financial_sentiment_lambda_name       = "${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}"
           articles_table        = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
           feeds_table        = "${DYNAMODB_SENTIMENT_FEEDS_TABLE}"
           aws_region         = "${AWS_REGION}"
-          artifact_key              = "deploy/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}.zip"
+          artifact_key              = "deploy/${FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET}/${FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET}.zip"
           EOF
 
       - name: Terraform plan
@@ -72,11 +75,38 @@ jobs:
 
       - name: Terraform Import Lambda Function 
         working-directory: terraform/deploy-financial-sentiment
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.sentiment_lambda $MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.feed_reader_lambda $MSS_FEED_READER_LAMBDA_NAME || true
+
+      - name: Terraform Import Financial Sentiment Lambda Function 
+        working-directory: terraform/deploy-financial-sentiment
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.financial_sentiment_lambda $MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME || true
+
+      - name: Terraform Import SQS Queue
+        working-directory: terraform/deploy-financial-sentiment
+        run: |
+          QUEUE_URL=$(aws sqs get-queue-url --queue-name "${MSS_FEED_READER_LAMBDA_NAME}-queue" --region "$AWS_REGION" --output text --query QueueUrl 2>/dev/null || echo "")
+          if [ -n "$QUEUE_URL" ]; then
+            terraform import -input=false -var-file=ci.auto.tfvars aws_sqs_queue.sentiment_queue "$QUEUE_URL" || true
+          else
+            echo "SQS queue ${MSS_FEED_READER_LAMBDA_NAME}-queue not found, skipping import."
+          fi
+
+      - name: Terraform Import SQS Event Source Mapping
+        working-directory: terraform/deploy-financial-sentiment
+        run: |
+          # Get the SQS queue ARN and lambda function ARN to find existing event source mapping
+          SQS_ARN=$(aws sqs get-queue-attributes --queue-url $(aws sqs get-queue-url --queue-name "${MSS_FEED_READER_LAMBDA_NAME}-queue" --region "$AWS_REGION" --output text --query QueueUrl) --attribute-names QueueArn --region "$AWS_REGION" --output text --query Attributes.QueueArn 2>/dev/null || echo "")
+          LAMBDA_ARN=$(aws lambda get-function --function-name "$MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME" --region "$AWS_REGION" --output text --query Configuration.FunctionArn 2>/dev/null || echo "")
+          if [ -n "$SQS_ARN" ] && [ -n "$LAMBDA_ARN" ]; then
+            ESM_UUID=$(aws lambda list-event-source-mappings --function-name "$LAMBDA_ARN" --event-source-arn "$SQS_ARN" --region "$AWS_REGION" --output text --query EventSourceMappings[0].UUID 2>/dev/null || echo "")
+            if [ -n "$ESM_UUID" ] && [ "$ESM_UUID" != "None" ]; then
+              terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_event_source_mapping.sqs_to_sentiment_lambda "$ESM_UUID" || true
+            fi
+          fi
 
       - name: Terraform Import Lambda Allow Events Permission
         working-directory: terraform/deploy-financial-sentiment
-        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
+        run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_permission.allow_events $MSS_FEED_READER_LAMBDA_NAME/AllowExecutionFromCloudWatch || true
 
       - name: Terraform Import Articles Table
         working-directory: terraform/deploy-financial-sentiment

@@ -8,8 +8,13 @@ variable "build_data_bucket" {
   type        = string
 }
 
-variable "sentiment_lambda_name" {
+variable "feed_reader_lambda_name" {
   description = "Name of the Lambda function"
+  type        = string
+}
+
+variable "financial_sentiment_lambda_name" {
+  description = "Name of the Financial Sentiment Lambda function"
   type        = string
 }
 
