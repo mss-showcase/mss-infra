@@ -18,6 +18,7 @@ env:
   TICKS_TABLE_ARN: ${{ vars.TICKS_TABLE_ARN }}
   FUNDAMENTALS_TABLE: ${{ vars.FUNDAMENTALS_TABLE }}
   FUNDAMENTALS_TABLE_ARN: ${{ vars.FUNDAMENTALS_TABLE_ARN }}
+  DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
 
 jobs:
   deploy:
@@ -74,6 +75,7 @@ jobs:
           ticks_table_arn    = "${TICKS_TABLE_ARN}"
           fundamentals_table = "${FUNDAMENTALS_TABLE}"
           fundamentals_table_arn = "${FUNDAMENTALS_TABLE_ARN}"  
+          dynamodb_sentiment_articles_table = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
           EOF
 
       - name: Terraform plan

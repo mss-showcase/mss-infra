@@ -39,3 +39,8 @@ variable "fundamentals_table_arn" {
   type        = string
   default     = null
 }
+
+variable dynamodb_sentiment_articles_table {
+  description = "DynamoDB table for sentiment articles"
+  type        = string
+}
