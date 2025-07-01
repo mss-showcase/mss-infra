@@ -108,14 +108,13 @@ resource "aws_lambda_function" "feed_reader_lambda" {
 }
 
 resource "aws_lambda_function" "financial_sentiment_lambda" {
-  function_name                  = var.financial_sentiment_lambda_name
-  s3_bucket                      = var.build_data_bucket
-  s3_key                         = var.artifact_key
-  handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime                        = "python3.11"
-  role                           = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout                        = 300
-  reserved_concurrent_executions = 2
+  function_name = var.financial_sentiment_lambda_name
+  s3_bucket     = var.build_data_bucket
+  s3_key        = var.artifact_key
+  handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
+  runtime       = "python3.11"
+  role          = aws_iam_role.sentiment_lambda_exec_role.arn
+  timeout       = 300
   environment {
     variables = {
       ARTICLES_TABLE = var.articles_table
