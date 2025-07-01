@@ -114,50 +114,35 @@ jobs:
             echo "API mss-backend-api not found, skipping import."
           fi
 
-      - name: Terraform Import API Gateway Route /stocks
+      - name: Terraform Import API Gateway Routes (looped)
         working-directory: terraform/deploy-backend
         run: |
           API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
-          if [ -n "$API_ID" ]; then
-            ROUTE_ID=$(aws apigatewayv2 get-routes --api-id "$API_ID" --region "$AWS_REGION" --query "Items[?RouteKey=='GET /stocks'].RouteId" --output text)
-            if [ -n "$ROUTE_ID" ]; then
-              terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.stocks_route "$API_ID/$ROUTE_ID" || true
-            else
-              echo "Route GET /stocks not found, skipping import."
-            fi
-          else
-            echo "API mss-backend-api not found, skipping route import."
+          if [ -z "$API_ID" ]; then
+            echo "API mss-backend-api not found, skipping all route imports."
+            exit 0
           fi
 
-      - name: Terraform Import API Gateway Route /ticks/{symbol}
-        working-directory: terraform/deploy-backend
-        run: |
-          API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
-          if [ -n "$API_ID" ]; then
-            ROUTE_ID=$(aws apigatewayv2 get-routes --api-id "$API_ID" --region "$AWS_REGION" --query "Items[?RouteKey=='GET /ticks/{symbol}'].RouteId" --output text)
-            if [ -n "$ROUTE_ID" ]; then
-              terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.ticks_route "$API_ID/$ROUTE_ID" || true
-            else
-              echo "Route GET /ticks/{symbol} not found, skipping import."
-            fi
-          else
-            echo "API mss-backend-api not found, skipping route import."
-          fi
+          declare -A ROUTES=(
+            [stocks]="GET /stocks"
+            [ticks_route]="GET /ticks/{symbol}"
+            [fundamentals_route]="GET /fundamentals/{symbol}"
+            [analysis_ta_stockmarkers_route]="GET /analysis/ta/stockmarkers"
+            [analysis_ta_stockmarker_route]="GET /analysis/ta/stockmarker/{ticker}/{markerid}"
+            [analysis_explanation_route]="GET /analysis/{ticker}/explanation"
+          )
 
-      - name: Terraform Import API Gateway Route /fundamentals/{symbol}
-        working-directory: terraform/deploy-backend
-        run: |
-          API_ID=$(aws apigatewayv2 get-apis --region "$AWS_REGION" --query "Items[?Name=='mss-backend-api'].ApiId" --output text)
-          if [ -n "$API_ID" ]; then
-            ROUTE_ID=$(aws apigatewayv2 get-routes --api-id "$API_ID" --region "$AWS_REGION" --query "Items[?RouteKey=='GET /fundamentals/{symbol}'].RouteId" --output text)
+          for NAME in "${!ROUTES[@]}"; do
+            ROUTE_KEY="${ROUTES[$NAME]}"
+            ROUTE_ID=$(aws apigatewayv2 get-routes --api-id "$API_ID" --region "$AWS_REGION" --query "Items[?RouteKey=='$ROUTE_KEY'].RouteId" --output text)
             if [ -n "$ROUTE_ID" ]; then
-              terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.fundamentals_route "$API_ID/$ROUTE_ID" || true
+              echo "Importing route $ROUTE_KEY as $NAME ($API_ID/$ROUTE_ID)"
+              terraform import -input=false -var-file=ci.auto.tfvars aws_apigatewayv2_route.$NAME "$API_ID/$ROUTE_ID" || true
             else
-              echo "Route GET /fundamentals/{symbol} not found, skipping import."
+              echo "Route $ROUTE_KEY not found, skipping import."
             fi
-          else
-            echo "API mss-backend-api not found, skipping route import."
-          fi
+          done
+
 
       - name: Terraform Import API Gateway Stage
         working-directory: terraform/deploy-backend
