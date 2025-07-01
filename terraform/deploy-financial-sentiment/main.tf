@@ -103,6 +103,7 @@ resource "aws_lambda_function" "feed_reader_lambda" {
       FEEDS_TABLE    = var.feeds_table
       RUN_MODE       = "FEED"
       SQS_QUEUE_URL  = aws_sqs_queue.sentiment_queue.url
+      FEED_URLS      = var.feed_urls
     }
   }
 }

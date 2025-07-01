@@ -17,6 +17,7 @@ env:
   MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME: ${{ vars.MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
   DYNAMODB_SENTIMENT_FEEDS_TABLE: ${{ vars.DYNAMODB_SENTIMENT_FEEDS_TABLE }}
+  FEED_URLS: ${{ vars.FEED_URLS }}
   LOCAL_LAMBDA_FILE: mss-sentiments-lambda.zip
 
 jobs:
@@ -63,6 +64,7 @@ jobs:
           feeds_table        = "${DYNAMODB_SENTIMENT_FEEDS_TABLE}"
           aws_region         = "${AWS_REGION}"
           artifact_key              = "deploy/${FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET}/${FILENAME_OF_SENTIMENT_LAMBDAS_ON_S3_BUILD_BUCKET}.zip"
+          feed_urls                  = "${FEED_URLS}"
           EOF
 
       - name: Terraform plan

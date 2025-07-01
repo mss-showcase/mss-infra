@@ -37,3 +37,8 @@ variable "aws_region" {
   description = "AWS region"
   type        = string
 }
+
+variable "feed_urls" {
+  description = "Comma-separated list of feed URLs for the feed reader lambda."
+  type        = string
+}
