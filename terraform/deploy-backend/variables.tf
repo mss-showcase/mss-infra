@@ -1,3 +1,8 @@
+# CloudFront domain name for CORS
+variable "cloudfront_domain_name" {
+  description = "CloudFront domain name for CORS"
+  type        = string
+}
 # ARN for the sentiment articles DynamoDB table
 variable "dynamodb_sentiment_articles_table_arn" {
   description = "ARN of the DynamoDB table for sentiment articles"

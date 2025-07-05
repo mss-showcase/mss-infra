@@ -67,13 +67,18 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
   cors_configuration {
     allow_origins = [
       "http://localhost:5173",
-      "http://mss-webhosting-bucket.s3-website.eu-north-1.amazonaws.com"
+      "http://${var.cloudfront_domain_name}"
     ]
     allow_methods  = ["GET", "OPTIONS"]
     allow_headers  = ["*"]
     expose_headers = ["*"]
     max_age        = 86400
   }
+# Add variable for cloudfront_domain_name
+variable "cloudfront_domain_name" {
+  description = "CloudFront domain name for CORS"
+  type        = string
+}
 }
 
 resource "aws_apigatewayv2_integration" "mss_backend_lambda_integration" {
