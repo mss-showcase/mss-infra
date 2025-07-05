@@ -144,6 +144,7 @@ jobs:
             [stocks_route]="GET /stocks"
             [ticks_route]="GET /ticks/{symbol}"
             [fundamentals_route]="GET /fundamentals/{symbol}"
+            [fundamentals_list_route]="GET /fundamentals/list"
             [analysis_ta_stockmarkers_route]="GET /analysis/ta/stockmarkers"
             [analysis_ta_stockmarker_route]="GET /analysis/ta/stockmarker/{ticker}/{markerid}"
             [analysis_explanation_route]="GET /analysis/{ticker}/explanation"
