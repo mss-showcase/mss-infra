@@ -20,6 +20,7 @@ env:
   FUNDAMENTALS_TABLE_ARN: ${{ vars.FUNDAMENTALS_TABLE_ARN }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN }}
+  COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
 
 jobs:
   deploy:
@@ -41,12 +42,6 @@ jobs:
       - name: Set Lambda artifact location
         run: |
           echo "MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET=deploy/mss-backend/${MSS_BACKEND_VERSION}/mss-backend-lambda.zip" >> $GITHUB_ENV
-
-      - name: Download CloudFront domain name from S3
-        run: |
-          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt
-          CLOUDFRONT_DOMAIN_NAME=$(cat CLOUDFRONT_DOMAIN_NAME.txt | tr -d '\n')
-          echo "CLOUDFRONT_DOMAIN_NAME=$CLOUDFRONT_DOMAIN_NAME" >> $GITHUB_ENV
 
       - name: Download $MSS_BACKEND_LAMBDA_NAME artifact from S3 build bucket
         run: |
@@ -74,6 +69,8 @@ jobs:
       - name: Write Terraform variable file
         working-directory: terraform/deploy-backend
         run: |
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE COGNITO_POOL_ID.txt
+          COGNITO_POOL_ID=$(tr -d '\n' < COGNITO_POOL_ID.txt)        
           cat <<EOF > ci.auto.tfvars
           mss_backend_lambda_name = "${MSS_BACKEND_LAMBDA_NAME}"
           mss_backend_lambda_s3_key = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
@@ -86,6 +83,7 @@ jobs:
           dynamodb_sentiment_articles_table = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
           dynamodb_sentiment_articles_table_arn = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN}"
           cloudfront_domain_name = "${CLOUDFRONT_DOMAIN_NAME}"
+          cognito_pool_id = "${COGNITO_POOL_ID}"
           EOF
 
       - name: Terraform plan
