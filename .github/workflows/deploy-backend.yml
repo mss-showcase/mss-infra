@@ -132,6 +132,13 @@ jobs:
             [analysis_ta_stockmarkers_route]="GET /analysis/ta/stockmarkers"
             [analysis_ta_stockmarker_route]="GET /analysis/ta/stockmarker/{ticker}/{markerid}"
             [analysis_explanation_route]="GET /analysis/{ticker}/explanation"
+            # Cognito-related and user management routes
+            [auth_register_route]="POST /auth/register"
+            [auth_login_route]="POST /auth/login"
+            [auth_logout_route]="POST /auth/logout"
+            [user_me_get_route]="GET /user/me"
+            [user_me_put_route]="PUT /user/me"
+            [user_list_route]="GET /user/list"
           )
 
           for NAME in "${!ROUTES[@]}"; do
