@@ -36,8 +36,7 @@ resource "aws_cognito_user_pool_client" "main" {
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
     "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_CUSTOM_AUTH",
-    "ALLOW_USER_OAUTH_FLOW"
+    "ALLOW_CUSTOM_AUTH"
   ]
 
   allowed_oauth_flows                  = ["code", "implicit"]
@@ -56,19 +55,18 @@ resource "aws_cognito_user_pool_client" "main" {
   supported_identity_providers = ["COGNITO", "Google", "Facebook", "LoginWithAmazon"]
 }
 
-# Example: Google as an identity provider
-# You must set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET as TF variables or env vars
-# resource "aws_cognito_identity_provider" "google" {
-#   user_pool_id  = aws_cognito_user_pool.main.id
-#   provider_name = "Google"
-#   provider_type = "Google"
-#   provider_details = {
-#     client_id     = var.google_client_id
-#     client_secret = var.google_client_secret
-#     authorize_scopes = "openid email profile"
-#   }
-#   attribute_mapping = {
-#     email = "email"
-#     name  = "name"
-#   }
-# }
+# Google identity provider
+resource "aws_cognito_identity_provider" "google" {
+  user_pool_id  = aws_cognito_user_pool.main.id
+  provider_name = "Google"
+  provider_type = "Google"
+  provider_details = {
+    client_id        = var.google_client_id
+    client_secret    = var.google_client_secret
+    authorize_scopes = "openid email profile"
+  }
+  attribute_mapping = {
+    email = "email"
+    name  = "name"
+  }
+}
