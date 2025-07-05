@@ -118,19 +118,26 @@ jobs:
 
       - name: Create admin user and groups
         run: |
+          # Validate and construct admin email
+          ADMIN_EMAIL="$COGNITO_ADMIN_USERNAME"
+          ADMIN_USERNAME="$COGNITO_ADMIN_USERNAME"
+          
+          echo "Admin username: $ADMIN_USERNAME"
+          echo "Admin email: $ADMIN_EMAIL"
+          
           # Create admin user if not exists
-          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$COGNITO_ADMIN_USERNAME" --region "$AWS_REGION" || \
+          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$ADMIN_USERNAME" --region "$AWS_REGION" || \
           aws cognito-idp admin-create-user \
             --user-pool-id "$USER_POOL_ID" \
-            --username "$COGNITO_ADMIN_USERNAME" \
-            --user-attributes Name=email,Value="${COGNITO_ADMIN_USERNAME}@example.com" \
+            --username "$ADMIN_USERNAME" \
+            --user-attributes Name=email,Value="$ADMIN_EMAIL" \
             --message-action SUPPRESS \
             --region "$AWS_REGION"
 
           # Set admin password
           aws cognito-idp admin-set-user-password \
             --user-pool-id "$USER_POOL_ID" \
-            --username "$COGNITO_ADMIN_USERNAME" \
+            --username "$ADMIN_USERNAME" \
             --password "$COGNITO_ADMIN_PASSWORD" \
             --permanent \
             --region "$AWS_REGION"
@@ -144,7 +151,7 @@ jobs:
           # Add admin user to admin group
           aws cognito-idp admin-add-user-to-group \
             --user-pool-id "$USER_POOL_ID" \
-            --username "$COGNITO_ADMIN_USERNAME" \
+            --username "$ADMIN_USERNAME" \
             --group-name admin \
             --region "$AWS_REGION"
 
