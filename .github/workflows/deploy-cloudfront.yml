@@ -44,6 +44,15 @@ jobs:
           EOF
           terraform fmt ci.auto.tfvars
 
+      - name: Terraform Import CloudFront Distribution
+        working-directory: terraform/cloudfront
+        run: |
+          if [ -n "$DISTRIBUTION_ID" ]; then
+            terraform import -input=false aws_cloudfront_distribution.cf_distribution "$DISTRIBUTION_ID" || true
+          else
+            echo "No CloudFront Distribution ID found, skipping import."
+          fi
+
       - name: Terraform Format Check
         working-directory: terraform/cloudfront
         run: terraform fmt -check -recursive
