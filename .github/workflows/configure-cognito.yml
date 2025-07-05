@@ -1,0 +1,101 @@
+name: Configure Cognito User Pool
+
+on:
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
+  COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
+  COGNITO_CLIENT_ID_FILE: ${{ vars.COGNITO_CLIENT_ID_FILE }}
+  COGNITO_ADMIN_PASSWORD_FILE: ${{ vars.COGNITO_ADMIN_PASSWORD_FILE }}
+  COGNITO_ADMIN_USERNAME: ${{ vars.COGNITO_ADMIN_USERNAME }}
+  COGNITO_ADMIN_PASSWORD: ${{ secrets.COGNITO_ADMIN_PASSWORD }}
+
+jobs:
+  upsert-cognito:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Write Terraform variable file
+        working-directory: terraform/cognito
+        run: |
+          cat <<EOF > ci.auto.tfvars
+          webhosting_bucket = "${WEBHOSTING_BUCKET}"
+          aws_region        = "${AWS_REGION}"
+          EOF
+
+      - name: Terraform Format Check
+        working-directory: terraform/cognito
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/cognito
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/cognito
+        run: terraform plan -input=false -var-file=ci.auto.tfvars
+
+      - name: Terraform Apply
+        working-directory: terraform/cognito
+        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
+
+      - name: Get Cognito User Pool and Client IDs
+        id: cognito_ids
+        run: |
+          USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 --region "$AWS_REGION" --query "UserPools[?Name=='mss-user-pool'].Id" --output text)
+          CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "UserPoolClients[0].ClientId" --output text)
+          echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
+          echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
+          echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
+          echo "$CLIENT_ID" > $COGNITO_CLIENT_ID_FILE
+
+      - name: Create admin user and groups
+        run: |
+          # Create admin user if not exists
+          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$COGNITO_ADMIN_USERNAME" --region "$AWS_REGION" || \
+          aws cognito-idp admin-create-user \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$COGNITO_ADMIN_USERNAME" \
+            --user-attributes Name=email,Value="${COGNITO_ADMIN_USERNAME}@example.com" \
+            --message-action SUPPRESS \
+            --region "$AWS_REGION"
+
+          # Set admin password
+          aws cognito-idp admin-set-user-password \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$COGNITO_ADMIN_USERNAME" \
+            --password "$COGNITO_ADMIN_PASSWORD" \
+            --permanent \
+            --region "$AWS_REGION"
+
+          # Create groups if not exist
+          aws cognito-idp get-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+          aws cognito-idp create-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+          aws cognito-idp get-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+          aws cognito-idp create-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+
+          # Add admin user to admin group
+          aws cognito-idp admin-add-user-to-group \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$COGNITO_ADMIN_USERNAME" \
+            --group-name admin \
+            --region "$AWS_REGION"
+
+          # Save admin password to file
+          echo "$COGNITO_ADMIN_PASSWORD" > $COGNITO_ADMIN_PASSWORD_FILE
+
+      - name: Upload Cognito IDs and admin password to S3
+        run: |
+          aws s3 cp $COGNITO_POOL_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE
+          aws s3 cp $COGNITO_CLIENT_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE
+          aws s3 cp $COGNITO_ADMIN_PASSWORD_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_ADMIN_PASSWORD_FILE

@@ -16,6 +16,12 @@ if you would fork this project, these vars and secrets needs to be defined at or
 | DYNAMODB_SENTIMENT_ARTICLES_TABLE      | Variable| Name of the DynamoDB table for sentiment (rss feed) articles                     |
 | DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN  | Variable| ARN of the DynamoDB table for sentiment articles                                 |
 | AWS_ROLE_ARN                           | Secret  | ARN of the AWS IAM role to assume for GitHub Actions                             |
+| WEBHOSTING_BUCKET                      | Variable| Name of the S3 bucket used for webhosting (used for Cognito callback/logout URLs)|
+| COGNITO_POOL_ID_FILE                   | Variable| S3 key (filename) for storing Cognito User Pool ID                               |
+| COGNITO_CLIENT_ID_FILE                 | Variable| S3 key (filename) for storing Cognito User Pool Client ID                        |
+| COGNITO_ADMIN_PASSWORD_FILE            | Variable| S3 key (filename) for storing Cognito admin user's password                      |
+| COGNITO_ADMIN_USERNAME                 | Variable| Username for the Cognito admin user                                              |
+| COGNITO_ADMIN_PASSWORD                 | Secret  | Password for the Cognito admin user                                              |
 
 # Deploy
 
