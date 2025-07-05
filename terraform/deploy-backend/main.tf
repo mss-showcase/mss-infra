@@ -77,7 +77,7 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
       "http://localhost:5173",
       "https://${var.cloudfront_domain_name}"
     ]
-    allow_methods  = ["GET", "OPTIONS"]
+    allow_methods  = ["GET", "POST", "PUT", "HEAD", "OPTIONS"]
     allow_headers  = ["*"]
     expose_headers = ["*"]
     max_age        = 86400
