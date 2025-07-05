@@ -110,6 +110,12 @@ resource "aws_apigatewayv2_route" "fundamentals_route" {
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 
+resource "aws_apigatewayv2_route" "fundamentals_list_route" {
+  api_id    = aws_apigatewayv2_api.mss_backend_api.id
+  route_key = "GET /fundamentals/list"
+  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+}
+
 # New endpoints for analysis
 resource "aws_apigatewayv2_route" "analysis_ta_stockmarkers_route" {
   api_id    = aws_apigatewayv2_api.mss_backend_api.id
@@ -126,6 +132,12 @@ resource "aws_apigatewayv2_route" "analysis_ta_stockmarker_route" {
 resource "aws_apigatewayv2_route" "analysis_explanation_route" {
   api_id    = aws_apigatewayv2_api.mss_backend_api.id
   route_key = "GET /analysis/{ticker}/explanation"
+  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_list_route" {
+  api_id    = aws_apigatewayv2_api.mss_backend_api.id
+  route_key = "GET /user/list"
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 
