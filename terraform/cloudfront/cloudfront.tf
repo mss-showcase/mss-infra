@@ -1,8 +1,55 @@
+# Response headers policy for COOP on callback/logout
+resource "aws_cloudfront_response_headers_policy" "coop_unsafe_none" {
+  name = "coop-unsafe-none"
+
+  custom_headers_config {
+    items {
+      header   = "Cross-Origin-Opener-Policy"
+      value    = "unsafe-none"
+      override = true
+    }
+  }
+}
 resource "aws_cloudfront_origin_access_identity" "oai" {
   comment = "OAI for webhosting bucket"
 }
 
 resource "aws_cloudfront_distribution" "cf_distribution" {
+  ordered_cache_behavior {
+    path_pattern     = "/callback*"
+    target_origin_id = "s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/logout/callback*"
+    target_origin_id = "s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+    min_ttl     = 0
+    default_ttl = 3600
+    max_ttl     = 86400
+  }
   enabled             = true
   default_root_object = "index.html"
 
