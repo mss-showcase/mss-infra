@@ -52,7 +52,7 @@ resource "aws_cognito_user_pool_client" "main" {
     "http://${var.webhosting_bucket}.s3-website.${var.aws_region}.amazonaws.com/logout"
   ]
 
-  supported_identity_providers = ["COGNITO", "Google", "Facebook", "LoginWithAmazon"]
+  supported_identity_providers = ["COGNITO", "Google"]
 }
 
 # Google identity provider
