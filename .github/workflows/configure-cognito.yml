@@ -91,7 +91,21 @@ jobs:
             exit 1
           fi
           
-          CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "UserPoolClients[0].ClientId" --output text)
+          # Get Client ID, handling case where client might not exist yet
+          CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "UserPoolClients[0].ClientId" --output text 2>/dev/null || echo "")
+          
+          # If CLIENT_ID is empty, try to get it from Terraform outputs as fallback
+          if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+            echo "User pool client not found via AWS CLI, checking Terraform outputs..."
+            cd terraform/cognito
+            CLIENT_ID=$(terraform output -raw user_pool_client_id 2>/dev/null || echo "")
+            cd ../..
+          fi
+          
+          if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
+            echo "Error: Could not find User Pool Client ID"
+            exit 1
+          fi
           
           # Create directory structure for Cognito files if needed
           mkdir -p $(dirname "$COGNITO_POOL_ID_FILE")
