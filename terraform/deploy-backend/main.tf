@@ -74,11 +74,11 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
     expose_headers = ["*"]
     max_age        = 86400
   }
-# Add variable for cloudfront_domain_name
-variable "cloudfront_domain_name" {
-  description = "CloudFront domain name for CORS"
-  type        = string
-}
+  # Add variable for cloudfront_domain_name
+  variable "cloudfront_domain_name" {
+    description = "CloudFront domain name for CORS"
+    type        = string
+  }
 }
 
 resource "aws_apigatewayv2_integration" "mss_backend_lambda_integration" {
