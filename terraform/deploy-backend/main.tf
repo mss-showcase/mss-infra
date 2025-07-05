@@ -1,3 +1,9 @@
+# Set log group retention for Lambda logs
+resource "aws_cloudwatch_log_group" "mss_backend_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.mss_backend_lambda.function_name}"
+  retention_in_days = 8
+}
+
 resource "aws_lambda_function" "mss_backend_lambda" {
   function_name = var.mss_backend_lambda_name
   s3_bucket     = var.build_data_bucket
