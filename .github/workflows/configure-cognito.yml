@@ -31,7 +31,11 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
-        
+
+      - name: Init Terraform
+        working-directory: terraform/cognito
+        run: terraform init -input=false -upgrade
+
       - name: Write Terraform variable file
         working-directory: terraform/cognito
         run: |
