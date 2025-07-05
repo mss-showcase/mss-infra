@@ -70,7 +70,9 @@ jobs:
         working-directory: terraform/deploy-backend
         run: |
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE COGNITO_POOL_ID.txt
-          COGNITO_POOL_ID=$(tr -d '\n' < COGNITO_POOL_ID.txt)        
+          COGNITO_POOL_ID=$(tr -d '\n' < COGNITO_POOL_ID.txt)
+          aws s3 s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt
+          CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)
           cat <<EOF > ci.auto.tfvars
           mss_backend_lambda_name = "${MSS_BACKEND_LAMBDA_NAME}"
           mss_backend_lambda_s3_key = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
