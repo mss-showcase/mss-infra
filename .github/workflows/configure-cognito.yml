@@ -75,8 +75,28 @@ jobs:
       - name: Get Cognito User Pool and Client IDs
         id: cognito_ids
         run: |
-          USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 --region "$AWS_REGION" --query "UserPools[?Name=='mss-user-pool'].Id" --output text)
+          # Get User Pool ID, handling case where pool might not exist yet
+          USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 --region "$AWS_REGION" --query "UserPools[?Name=='mss-user-pool'].Id" --output text | cut -f1)
+          
+          # If USER_POOL_ID is empty, try to get it from Terraform outputs as fallback
+          if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
+            echo "User pool not found via AWS CLI, checking Terraform outputs..."
+            cd terraform/cognito
+            USER_POOL_ID=$(terraform output -raw user_pool_id 2>/dev/null || echo "")
+            cd ../..
+          fi
+          
+          if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
+            echo "Error: Could not find User Pool ID"
+            exit 1
+          fi
+          
           CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "UserPoolClients[0].ClientId" --output text)
+          
+          # Create directory structure for Cognito files if needed
+          mkdir -p $(dirname "$COGNITO_POOL_ID_FILE")
+          mkdir -p $(dirname "$COGNITO_CLIENT_ID_FILE")
+          
           echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
           echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
           echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
