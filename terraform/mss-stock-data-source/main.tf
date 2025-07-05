@@ -1,3 +1,13 @@
+# Set log group retention for both Lambda functions
+resource "aws_cloudwatch_log_group" "stock_data_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.stock_data_lambda.function_name}"
+  retention_in_days = 5
+}
+
+resource "aws_cloudwatch_log_group" "fundamentals_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.fundamentals_lambda.function_name}"
+  retention_in_days = 5
+}
 resource "aws_iam_role" "lambda_exec_role" {
   name = "mss-lambda-exec-role"
 

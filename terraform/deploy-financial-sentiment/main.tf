@@ -1,3 +1,13 @@
+# Set log group retention for both Lambda functions
+resource "aws_cloudwatch_log_group" "feed_reader_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.feed_reader_lambda.function_name}"
+  retention_in_days = 5
+}
+
+resource "aws_cloudwatch_log_group" "financial_sentiment_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.financial_sentiment_lambda.function_name}"
+  retention_in_days = 5
+}
 provider "aws" {
   region = var.aws_region
 }

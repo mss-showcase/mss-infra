@@ -1,3 +1,8 @@
+# Set log group retention for Lambda
+resource "aws_cloudwatch_log_group" "stock_data_to_dynamo_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.stock_data_to_dynamo.function_name}"
+  retention_in_days = 5
+}
 # Add your DynamoDB tables here if not already managed elsewhere
 
 # The ttl attribute should be a Number (UNIX epoch time in seconds when the item should expire).
