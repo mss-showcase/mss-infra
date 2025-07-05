@@ -119,13 +119,3 @@ resource "aws_s3_bucket_policy" "webhosting_policy" {
     ]
   })
 }
-
-output "cloudfront_distribution_id" {
-  description = "ID of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.cf_distribution.id
-}
-
-output "cloudfront_domain_name" {
-  description = "Domain name of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.cf_distribution.domain_name
-}
