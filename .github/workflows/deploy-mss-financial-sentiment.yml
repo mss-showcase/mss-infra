@@ -75,7 +75,17 @@ jobs:
         working-directory: terraform/deploy-financial-sentiment
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_iam_role.sentiment_lambda_exec_role sentiment-lambda-exec-role || true
 
-      - name: Terraform Import Lambda Function 
+      - name: Terraform Import Feed Reader Lambda Log Group
+        working-directory: terraform/deploy-financial-sentiment
+        run: |
+          terraform import -input=false -var-file=ci.auto.tfvars aws_cloudwatch_log_group.feed_reader_lambda_log_group "/aws/lambda/${MSS_FEED_READER_LAMBDA_NAME}" || true
+
+      - name: Terraform Import Financial Sentiment Lambda Log Group
+        working-directory: terraform/deploy-financial-sentiment
+        run: |
+          terraform import -input=false -var-file=ci.auto.tfvars aws_cloudwatch_log_group.financial_sentiment_lambda_log_group "/aws/lambda/${MSS_FINANCIAL_SENTIMENT_LAMBDA_NAME}" || true
+
+      - name: Terraform Import Feed Reader Lambda Function 
         working-directory: terraform/deploy-financial-sentiment
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.feed_reader_lambda $MSS_FEED_READER_LAMBDA_NAME || true
 

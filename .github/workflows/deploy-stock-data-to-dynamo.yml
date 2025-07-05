@@ -73,6 +73,11 @@ jobs:
         working-directory: terraform/deploy-stock-data-to-dynamo
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
+      - name: Terraform Import Stock Data Lambda Log Group
+        working-directory: terraform/deploy-stock-data-to-dynamo
+        run: |
+          terraform import -input=false aws_cloudwatch_log_group.stock_data_to_dynamo_log_group "/aws/lambda/${LAMBDA_NAME}" || true
+
       - name: Terraform Import Lambda Function
         working-directory: terraform/deploy-stock-data-to-dynamo
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.stock_data_to_dynamo $LAMBDA_NAME || true

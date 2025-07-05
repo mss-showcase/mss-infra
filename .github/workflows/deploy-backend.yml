@@ -94,6 +94,11 @@ jobs:
         working-directory: terraform/deploy-backend
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
+      - name: Terraform Import Lambda Log Group
+        working-directory: terraform/deploy-backend
+        run: |
+          terraform import -input=false -var-file=ci.auto.tfvars aws_cloudwatch_log_group.mss_backend_lambda_log_group "/aws/lambda/${MSS_BACKEND_LAMBDA_NAME}" || true
+
       - name: Terraform Import Lambda Function
         working-directory: terraform/deploy-backend
         run: terraform import -input=false -var-file=ci.auto.tfvars aws_lambda_function.mss_backend_lambda $MSS_BACKEND_LAMBDA_NAME || true
