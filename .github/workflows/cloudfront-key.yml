@@ -1,0 +1,110 @@
+name: CloudFront Key Management
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+jobs:
+  manage-cloudfront-key:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      # used for app data
+      SHARED_DATA_BUCKET: ${{ vars.SHARED_DATA_BUCKET }} 
+      # used for build artifacts
+      SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }} 
+      CURRENT_TIMESTAMP: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Generate timestamp for resource names
+        id: current_timestamp
+        run: |
+          echo "CURRENT_TIMESTAMP=$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
+
+      - name: Generate RSA key pair
+        run: |
+          openssl genrsa -out private.pem 2048
+          openssl rsa -pubout -in private.pem -out public.pem
+
+      - name: List files after key generation
+        run: ls -l
+
+      - name: Upload private key to AWS Secrets Manager
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          SECRET_NAME: cloudfront-private-key-${{ env.CURRENT_TIMESTAMP }}
+        run: |
+          if aws secretsmanager describe-secret --secret-id "$SECRET_NAME" --region "$AWS_REGION" > /dev/null 2>&1; then
+            aws secretsmanager put-secret-value --secret-id "$SECRET_NAME" --secret-string file://private.pem --region "$AWS_REGION"
+          else
+            aws secretsmanager create-secret --name "$SECRET_NAME" --secret-string file://private.pem --region "$AWS_REGION"
+          fi
+
+      - name: Prepare Terraform public key file
+        run: cp public.pem terraform/cloudfront-key/public.pem
+
+      - name: Terraform Init
+        working-directory: terraform/cloudfront-key
+        run: terraform init -input=false -upgrade
+
+      - name: Import S3 bucket if it already exists
+        working-directory: terraform/cloudfront-key
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          SHARED_BUILD_DATA_BUCKET: ${{ env.SHARED_BUILD_DATA_BUCKET }}
+        run: |
+          if aws s3api head-bucket --bucket "$SHARED_BUILD_DATA_BUCKET" --region "$AWS_REGION" 2>/dev/null; then
+            echo "Bucket $SHARED_BUILD_DATA_BUCKET exists, importing to Terraform state..."
+            terraform import \
+            -var="cf_public_key_name=$CF_PUBLIC_KEY_NAME" \
+            -var="cf_key_group_name=$CF_KEY_GROUP_NAME" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET" \
+            -input=false aws_s3_bucket.build_artifacts "$SHARED_BUILD_DATA_BUCKET" || true
+          else
+            echo "Bucket $SHARED_BUILD_DATA_BUCKET does not exist, will be created by Terraform."
+          fi
+      - name: Terraform Apply
+        working-directory: terraform/cloudfront-key
+        env:
+          CF_PUBLIC_KEY_NAME: cf-public-key-${{ env.CURRENT_TIMESTAMP }}
+          CF_KEY_GROUP_NAME: cf-key-group-${{ env.CURRENT_TIMESTAMP }}
+        run: |
+          terraform apply -auto-approve \
+            -var="cf_public_key_name=$CF_PUBLIC_KEY_NAME" \
+            -var="cf_key_group_name=$CF_KEY_GROUP_NAME" \
+            -var="build_data_bucket=$SHARED_BUILD_DATA_BUCKET"
+      - name: Get CloudFront Key Group ID output from Terraform
+        id: keygroup_output
+        working-directory: terraform/cloudfront-key
+        run: |
+          id=$(terraform output -raw cloudfront_key_group_id)
+          echo "$id" > ../../CLOUDFRONT_KEY_GROUP_ID.txt
+          echo "cloudfront-private-key-${{ env.CURRENT_TIMESTAMP }}" > ../../CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt
+
+      - name: Upload Key Group ID to S3
+        run: aws s3 cp CLOUDFRONT_KEY_GROUP_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_KEY_GROUP_ID.txt --region $AWS_REGION
+
+      - name: Upload Private Key Secret Name to S3
+        run: aws s3 cp CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_PRIVATE_KEY_SECRET_NAME.txt --region $AWS_REGION
+
+
+

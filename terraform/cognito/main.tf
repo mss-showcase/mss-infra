@@ -46,10 +46,12 @@ resource "aws_cognito_user_pool_client" "main" {
 
   # Dynamically construct the webhosting bucket URL for callback/logout
   callback_urls = [
-    "http://${var.webhosting_bucket}.s3-website.${var.aws_region}.amazonaws.com/callback"
+    "https://localhost:3000/callback",
+    "https://localhost:5173/callback"
   ]
   logout_urls = [
-    "http://${var.webhosting_bucket}.s3-website.${var.aws_region}.amazonaws.com/logout"
+    "https://localhost:3000/logout",
+    "https://localhost:5173/logout"
   ]
 
   supported_identity_providers = ["COGNITO", aws_cognito_identity_provider.google.provider_name]

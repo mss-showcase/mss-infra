@@ -1,0 +1,81 @@
+name: Deploy CloudFront for Frontend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  WEBHOSTING_BUCKET: ${{ vars.WEBHOSTING_BUCKET }}
+  SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Init Terraform
+        working-directory: terraform/cloudfront
+        run: terraform init -input=false -upgrade
+
+      - name: Write Terraform variable file
+        working-directory: terraform/cloudfront
+        run: |
+          cat <<EOF > ci.auto.tfvars
+          webhosting_bucket = "${WEBHOSTING_BUCKET}"
+          aws_region        = "${AWS_REGION}"
+          EOF
+          terraform fmt ci.auto.tfvars
+
+      - name: Terraform Format Check
+        working-directory: terraform/cloudfront
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/cloudfront
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/cloudfront
+        run: terraform plan -input=false -var-file=ci.auto.tfvars
+
+      - name: Terraform Apply
+        working-directory: terraform/cloudfront
+        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
+
+      - name: Get CloudFront Distribution outputs
+        id: cf_outputs
+        working-directory: terraform/cloudfront
+        run: |
+          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+          DOMAIN_NAME=$(terraform output -raw cloudfront_domain_name)
+          echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
+          echo "DOMAIN_NAME=$DOMAIN_NAME" >> $GITHUB_ENV
+          echo "$DISTRIBUTION_ID" > ../../CLOUDFRONT_DISTRIBUTION_ID.txt
+          echo "$DOMAIN_NAME" > ../../CLOUDFRONT_DOMAIN_NAME.txt
+
+      - name: Upload CloudFront outputs to S3
+        run: |
+          aws s3 cp CLOUDFRONT_DISTRIBUTION_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DISTRIBUTION_ID.txt --region $AWS_REGION
+          aws s3 cp CLOUDFRONT_DOMAIN_NAME.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
+
+      - name: Display CloudFront URLs
+        run: |
+          echo "CloudFront Distribution ID: $DISTRIBUTION_ID"
+          echo "CloudFront Domain Name: $DOMAIN_NAME"
+          echo "HTTPS Frontend URL: https://$DOMAIN_NAME"
