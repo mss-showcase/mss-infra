@@ -2,7 +2,7 @@
 # expected retention_in_days to be one of [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1096 1827 2192 2557 2922 3288 3653], got 8
 resource "aws_cloudwatch_log_group" "mss_backend_lambda_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.mss_backend_lambda.function_name}"
-  retention_in_days = 5
+  retention_in_days = 3
 }
 
 resource "aws_lambda_function" "mss_backend_lambda" {
