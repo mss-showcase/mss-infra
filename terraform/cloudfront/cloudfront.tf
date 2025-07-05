@@ -16,11 +16,11 @@ resource "aws_cloudfront_origin_access_identity" "oai" {
 
 resource "aws_cloudfront_distribution" "cf_distribution" {
   ordered_cache_behavior {
-    path_pattern     = "/callback*"
-    target_origin_id = "s3-origin"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
+    path_pattern               = "/callback*"
+    target_origin_id           = "s3-origin"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
     response_headers_policy_id = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
     forwarded_values {
       query_string = false
@@ -34,11 +34,11 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   }
 
   ordered_cache_behavior {
-    path_pattern     = "/logout/callback*"
-    target_origin_id = "s3-origin"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
+    path_pattern               = "/logout/callback*"
+    target_origin_id           = "s3-origin"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
+    cached_methods             = ["GET", "HEAD"]
     response_headers_policy_id = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
     forwarded_values {
       query_string = false
