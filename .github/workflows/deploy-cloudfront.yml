@@ -61,6 +61,23 @@ jobs:
             echo "No CloudFront Distribution ID found, skipping import."
           fi
 
+      - name: Download CloudFront Response Headers Policy ID from S3 (if exists)
+        run: |
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt --region $AWS_REGION || true
+          if [ -f CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt ]; then
+            export RESPONSE_HEADERS_POLICY_ID=$(cat CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt | tr -d '\n')
+            echo "RESPONSE_HEADERS_POLICY_ID=$RESPONSE_HEADERS_POLICY_ID" >> $GITHUB_ENV
+          fi
+
+      - name: Terraform Import CloudFront Response Headers Policy
+        working-directory: terraform/cloudfront
+        run: |
+          if [ -n "$RESPONSE_HEADERS_POLICY_ID" ]; then
+            terraform import -input=false aws_cloudfront_response_headers_policy.coop_unsafe_none "$RESPONSE_HEADERS_POLICY_ID" || true
+          else
+            echo "No CloudFront Response Headers Policy ID found, skipping import."
+          fi
+
       - name: Terraform Format Check
         working-directory: terraform/cloudfront
         run: terraform fmt -check -recursive
@@ -87,11 +104,15 @@ jobs:
           echo "DOMAIN_NAME=$DOMAIN_NAME" >> $GITHUB_ENV
           echo "$DISTRIBUTION_ID" > ../../CLOUDFRONT_DISTRIBUTION_ID.txt
           echo "$DOMAIN_NAME" > ../../CLOUDFRONT_DOMAIN_NAME.txt
+          RESPONSE_HEADERS_POLICY_ID=$(terraform output -raw coop_unsafe_none_response_headers_policy_id)
+          echo "RESPONSE_HEADERS_POLICY_ID=$RESPONSE_HEADERS_POLICY_ID" >> $GITHUB_ENV
+          echo "$RESPONSE_HEADERS_POLICY_ID" > ../../CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt
 
       - name: Upload CloudFront outputs to S3
         run: |
           aws s3 cp CLOUDFRONT_DISTRIBUTION_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DISTRIBUTION_ID.txt --region $AWS_REGION
           aws s3 cp CLOUDFRONT_DOMAIN_NAME.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
+          aws s3 cp CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_RESPONSE_HEADERS_POLICY_ID.txt --region $AWS_REGION
 
       - name: Display CloudFront URLs
         run: |
