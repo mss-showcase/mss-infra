@@ -10,7 +10,6 @@ permissions:
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
-  WEBHOSTING_BUCKET: ${{ vars.WEBHOSTING_BUCKET }}
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
   COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
   COGNITO_CLIENT_ID_FILE: ${{ vars.COGNITO_CLIENT_ID_FILE }}
@@ -34,6 +33,13 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Download CloudFront domain name from S3
+        run: |
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
+          echo "CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)" >> $GITHUB_ENV
 
       - name: Init Terraform
         working-directory: terraform/cognito
@@ -43,10 +49,10 @@ jobs:
         working-directory: terraform/cognito
         run: |
           cat <<EOF > ci.auto.tfvars
-          webhosting_bucket    = "${WEBHOSTING_BUCKET}"
-          aws_region          = "${AWS_REGION}"
-          google_client_id    = "${GOOGLE_CLIENT_ID}"
-          google_client_secret = "${GOOGLE_CLIENT_SECRET}"
+          aws_region             = "${AWS_REGION}"
+          google_client_id       = "${GOOGLE_CLIENT_ID}"
+          google_client_secret   = "${GOOGLE_CLIENT_SECRET}"
+          cloudfront_domain_name = "${CLOUDFRONT_DOMAIN_NAME}"
           EOF
           terraform fmt ci.auto.tfvars
 

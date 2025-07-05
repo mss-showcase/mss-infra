@@ -44,14 +44,12 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_flows_user_pool_client = true
 
 
-  # Dynamically construct the webhosting bucket URL for callback/logout
+  # Use CloudFront HTTPS domain for callback/logout URLs
   callback_urls = [
-    "https://localhost:3000/callback",
-    "https://localhost:5173/callback"
+    "https://${var.cloudfront_domain_name}/callback"
   ]
   logout_urls = [
-    "https://localhost:3000/logout",
-    "https://localhost:5173/logout"
+    "https://${var.cloudfront_domain_name}/logout"
   ]
 
   supported_identity_providers = ["COGNITO", aws_cognito_identity_provider.google.provider_name]
