@@ -44,6 +44,14 @@ jobs:
           EOF
           terraform fmt ci.auto.tfvars
 
+      - name: Download CloudFront Distribution ID from S3 (if exists)
+        run: |
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DISTRIBUTION_ID.txt CLOUDFRONT_DISTRIBUTION_ID.txt --region $AWS_REGION || true
+          if [ -f CLOUDFRONT_DISTRIBUTION_ID.txt ]; then
+            export DISTRIBUTION_ID=$(cat CLOUDFRONT_DISTRIBUTION_ID.txt | tr -d '\n')
+            echo "DISTRIBUTION_ID=$DISTRIBUTION_ID" >> $GITHUB_ENV
+          fi
+
       - name: Terraform Import CloudFront Distribution
         working-directory: terraform/cloudfront
         run: |
