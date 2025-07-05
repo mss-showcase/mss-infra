@@ -12,7 +12,7 @@ resource "aws_lambda_function" "mss_backend_lambda" {
       TICKS_TABLE                       = var.ticks_table
       FUNDAMENTALS_TABLE                = var.fundamentals_table
       DYNAMODB_SENTIMENT_ARTICLES_TABLE = var.dynamodb_sentiment_articles_table
-      COGNITO_POOL_ID                  = var.cognito_pool_id  
+      COGNITO_POOL_ID                   = var.cognito_pool_id
     }
   }
 }
