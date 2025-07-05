@@ -3,17 +3,21 @@ name: Configure Cognito User Pool
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   SHARED_BUILD_DATA_BUCKET: ${{ vars.SHARED_BUILD_DATA_BUCKET }}
   COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
   COGNITO_CLIENT_ID_FILE: ${{ vars.COGNITO_CLIENT_ID_FILE }}
-  COGNITO_ADMIN_PASSWORD_FILE: ${{ vars.COGNITO_ADMIN_PASSWORD_FILE }}
   COGNITO_ADMIN_USERNAME: ${{ vars.COGNITO_ADMIN_USERNAME }}
   COGNITO_ADMIN_PASSWORD: ${{ secrets.COGNITO_ADMIN_PASSWORD }}
 
 jobs:
-  upsert-cognito:
+  configure-cognito:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -91,11 +95,7 @@ jobs:
             --group-name admin \
             --region "$AWS_REGION"
 
-          # Save admin password to file
-          echo "$COGNITO_ADMIN_PASSWORD" > $COGNITO_ADMIN_PASSWORD_FILE
-
       - name: Upload Cognito IDs and admin password to S3
         run: |
           aws s3 cp $COGNITO_POOL_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE
           aws s3 cp $COGNITO_CLIENT_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE
-          aws s3 cp $COGNITO_ADMIN_PASSWORD_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_ADMIN_PASSWORD_FILE
