@@ -12,6 +12,7 @@ resource "aws_lambda_function" "mss_backend_lambda" {
       TICKS_TABLE                       = var.ticks_table
       FUNDAMENTALS_TABLE                = var.fundamentals_table
       DYNAMODB_SENTIMENT_ARTICLES_TABLE = var.dynamodb_sentiment_articles_table
+      COGNITO_POOL_ID                  = var.cognito_pool_id  
     }
   }
 }
@@ -67,7 +68,7 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
   cors_configuration {
     allow_origins = [
       "http://localhost:5173",
-      "http://${var.cloudfront_domain_name}"
+      "https://${var.cloudfront_domain_name}"
     ]
     allow_methods  = ["GET", "OPTIONS"]
     allow_headers  = ["*"]

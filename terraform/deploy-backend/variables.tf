@@ -54,3 +54,8 @@ variable "dynamodb_sentiment_articles_table" {
   description = "DynamoDB table for sentiment articles"
   type        = string
 }
+
+variable "cognito_pool_id" {
+  description = "The Cognito User Pool ID"
+  type        = string
+}
