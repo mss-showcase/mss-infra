@@ -23,26 +23,72 @@ if you would fork this project, these vars and secrets needs to be defined at or
 | COGNITO_ADMIN_USERNAME                 | Variable| Username for the Cognito admin user                                              |
 | COGNITO_ADMIN_PASSWORD                 | Secret  | Password for the Cognito admin user                                              |
 
+# AWS_ROLE_ARN
+
+You will need to create an AWS role that will be used (or its ARN) to let github to act as that role.
+This role needs these security policies:
+
+AmazonAPIGatewayAdministrator
+AmazonCognitoPowerUser
+AmazonDynamoDBFullAccess
+AmazonEventBridgeFullAccess
+AmazonS3FullAccess
+AmazonSQSFullAccess
+AWSLambda_FullAccess
+CloudFrontFullAccess
+IAMFullAccess
+SecretsManagerReadWrite
+CloudWatchLogsFullAccess
+
+As the list is too long, you will need to create one Policy that rule them all:
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "apigateway:*",
+        "cognito-identity:*",
+        "cognito-sync:*",
+        "cognito-idp:*",
+        "dynamodb:*",
+        "events:*",
+        "s3:*",
+        "sqs:*",
+        "lambda:*",
+        "cloudfront:*",
+        "iam:*",
+        "secretsmanager:*",
+        "logs:*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+
 # Deploy
 
 This repository uses manual-only deployment jobs, allowing IT to control what, when, and in what order to deploy. The available deploy jobs are:
 
 ## 1. MSS Stock Data Source Lambda
-Deploys the two Lambdas that collect stock data (fundamentals and ticks) and put it into S3, which is processed by the next lambda. This job also creates the webhosting and links it to the S3 data bucket.
+Deploys the two Lambdas that collect stock data (fundamentals and ticks) and put it into S3, which is processed by the next lambda. This job also creates the CloudFront distribution for webhosting and links it to the S3 data bucket.
 
 ## 2. MSS Deploy Data To Dynamo Lambda
 Deploys the two Lambdas that move stock tick.json and funda.json data from S3 into DynamoDB (with a 30-day TTL). This job also sets up the necessary execution roles for the Lambda.
 
 ## 3. MSS Financial Sentiment Lambda
-Deploys the feed reader and the sentiment Lambda those are responsible for processing financial news articles of RSS feeds and the storing of sentiment analysis results in DynamoDB. This job is responsible for ingesting and analyzing external sentiment data.
+Deploys the feed reader and the sentiment Lambda responsible for processing financial news articles from RSS feeds and storing sentiment analysis results in DynamoDB. This job is responsible for ingesting and analyzing external sentiment data.
 
-## 4. MSS Backend Lambda & API Gateway
-Deploys the backend Lambda and configures API Gateway routes for stock, fundamentals, and sentiment data. This job also manages IAM permissions and environment variables for the backend.
+## 4. MSS Backend Lambda, API Gateway & Cognito
+Deploys the backend Lambda, configures API Gateway routes for stock, fundamentals, sentiment data, and user management/authentication endpoints. This job also manages IAM permissions, environment variables, and integrates with Cognito for authentication and user management.
 
 **Deploy Order Recommendation:**
-1. MSS Stock Data Source Lambda
-2. MSS Deploy Data To Dynamo Lambda
-3. MSS Financial Sentiment Lambda
-4. MSS Backend Lambda & API Gateway
+1. CloudFront Key (provisions the CloudFront public key for signed URLs)
+2. CloudFront (provisions the CloudFront distribution for webhosting)
+3. MSS Stock Data Source Lambda
+4. MSS Deploy Data To Dynamo Lambda
+5. MSS Financial Sentiment Lambda
+6. MSS Backend Lambda, API Gateway & Cognito
 
 Each job is triggered manually via GitHub Actions. See the respective workflow files in `.github/workflows/` for details and customization options.
