@@ -59,3 +59,8 @@ variable "cognito_pool_id" {
   description = "The Cognito User Pool ID"
   type        = string
 }
+
+variable "webhosting_website_url" {
+  description = "S3 static website endpoint for shared webhosting bucket."
+  type        = string
+}

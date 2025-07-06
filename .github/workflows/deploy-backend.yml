@@ -21,6 +21,7 @@ env:
   DYNAMODB_SENTIMENT_ARTICLES_TABLE: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE }}
   DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN: ${{ vars.DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN }}
   COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
+  WEBHOSTING_BUCKET: ${{ vars.WEBHOSTING_BUCKET }}
 
 jobs:
   deploy:
@@ -60,6 +61,12 @@ jobs:
         working-directory: terraform/deploy-backend
         run: terraform validate
 
+      - name: Fetch S3 Website URL
+        id: fetch_s3_website_url
+        run: |
+
+          echo "S3 Website URL: $BUCKET_WEBSITE_URL"
+
       - name: Fetch TICKS_TABLE_ARN from AWS
         id: fetch_table_arn
         run: |
@@ -69,6 +76,8 @@ jobs:
       - name: Write Terraform variable file
         working-directory: terraform/deploy-backend
         run: |
+          WEBHOSTING_WEBSITE_URL=$(aws s3api get-bucket-website --bucket "$WEBHOSTING_BUCKET" --region "$AWS_REGION" --query '"http://" + [BucketWebsiteConfiguration][0].Bucket + ".s3-website-" + `echo $AWS_REGION` + ".amazonaws.com"' --output text 2>/dev/null || echo "http://$WEBHOSTING_BUCKET.s3-website-$AWS_REGION.amazonaws.com")
+          echo "WEBHOSTING_WEBSITE_URL=$WEBHOSTING_WEBSITE_URL"
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE COGNITO_POOL_ID.txt
           COGNITO_POOL_ID=$(tr -d '\n' < COGNITO_POOL_ID.txt)
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt
@@ -88,6 +97,7 @@ jobs:
           dynamodb_sentiment_articles_table_arn = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN}"
           cloudfront_domain_name = "${CLOUDFRONT_DOMAIN_NAME}"
           cognito_pool_id = "${COGNITO_POOL_ID}"
+          webhosting_website_url = "${WEBHOSTING_WEBSITE_URL}"
           EOF
 
       - name: Terraform plan

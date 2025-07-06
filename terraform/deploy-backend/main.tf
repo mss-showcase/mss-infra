@@ -75,6 +75,7 @@ resource "aws_apigatewayv2_api" "mss_backend_api" {
   cors_configuration {
     allow_origins = [
       "http://localhost:5173",
+      "http://${var.webhosting_website_url}",
       "https://${var.cloudfront_domain_name}"
     ]
     allow_methods  = ["GET", "POST", "PUT", "HEAD", "OPTIONS"]
