@@ -1,5 +1,5 @@
 output "coop_unsafe_none_response_headers_policy_id" {
-  value = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
+  value       = aws_cloudfront_response_headers_policy.coop_unsafe_none.id
   description = "ID of the CloudFront Response Headers Policy for COOP unsafe-none."
 }
 
