@@ -54,7 +54,7 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   default_root_object = "index.html"
 
   origin {
-    domain_name = "mss-webhosting-bucket.s3.eu-north-1.amazonaws.com"
+    domain_name = "${var.webhosting_bucket}.s3.${var.aws_region}.amazonaws.com"
     origin_id   = "s3-origin"
 
     s3_origin_config {
@@ -103,18 +103,29 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   }
 }
 
+# we need to create a combined policy for public read access (s3 static webhosting) and CloudFront OAI access 
+# # this is to allow public read access for development purposes, it can be removed when CloudFront is set up or when the development is complete
+
 resource "aws_s3_bucket_policy" "webhosting_policy" {
   bucket = var.webhosting_bucket
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
-        Effect = "Allow",
+        Sid       = "PublicReadGetObject"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = "arn:aws:s3:::${var.webhosting_bucket}/*"
+      },
+      {
+        Sid       = "AllowCloudFrontOAI"
+        Effect    = "Allow"
         Principal = {
           AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
-        },
-        Action   = "s3:GetObject",
-        Resource = "arn:aws:s3:::${var.webhosting_bucket}/*"
+        }
+        Action    = ["s3:GetObject"]
+        Resource  = "arn:aws:s3:::${var.webhosting_bucket}/*"
       }
     ]
   })
