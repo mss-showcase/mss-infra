@@ -54,7 +54,7 @@ resource "aws_cloudfront_distribution" "cf_distribution" {
   default_root_object = "index.html"
 
   origin {
-    domain_name = "${var.webhosting_bucket}.s3.${var.aws_region}.amazonaws.com"
+    domain_name = "mss-webhosting-bucket.s3.eu-north-1.amazonaws.com"
     origin_id   = "s3-origin"
 
     s3_origin_config {
