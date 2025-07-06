@@ -119,13 +119,13 @@ resource "aws_s3_bucket_policy" "webhosting_policy" {
         Resource  = "arn:aws:s3:::${var.webhosting_bucket}/*"
       },
       {
-        Sid       = "AllowCloudFrontOAI"
-        Effect    = "Allow"
+        Sid    = "AllowCloudFrontOAI"
+        Effect = "Allow"
         Principal = {
           AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
         }
-        Action    = ["s3:GetObject"]
-        Resource  = "arn:aws:s3:::${var.webhosting_bucket}/*"
+        Action   = ["s3:GetObject"]
+        Resource = "arn:aws:s3:::${var.webhosting_bucket}/*"
       }
     ]
   })
