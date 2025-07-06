@@ -78,6 +78,23 @@ jobs:
             echo "No CloudFront Response Headers Policy ID found, skipping import."
           fi
 
+      - name: Terraform Import CloudFront Origin Access Identity (OAI)
+        working-directory: terraform/cloudfront
+        run: |
+          if [ -n "$DISTRIBUTION_ID" ]; then
+            # Fetch the OAI ID from the CloudFront distribution config
+            OAI_ID=$(aws cloudfront get-distribution --id "$DISTRIBUTION_ID" --region "$AWS_REGION" \
+              --query "Distribution.DistributionConfig.Origins.Items[0].S3OriginConfig.OriginAccessIdentity" --output text | awk -F'/' '{print $NF}')
+            if [ -n "$OAI_ID" ] && [ "$OAI_ID" != "None" ]; then
+              terraform import -input=false aws_cloudfront_origin_access_identity.oai "$OAI_ID" || true
+              echo "Imported OAI $OAI_ID"
+            else
+              echo "No OAI ID found in distribution config, skipping import."
+            fi
+          else
+            echo "No CloudFront Distribution ID found, cannot fetch OAI ID. Skipping import."
+          fi
+
       - name: Terraform Format Check
         working-directory: terraform/cloudfront
         run: terraform fmt -check -recursive
@@ -118,4 +135,5 @@ jobs:
         run: |
           echo "CloudFront Distribution ID: $DISTRIBUTION_ID"
           echo "CloudFront Domain Name: $DOMAIN_NAME"
+          echo "CloudFront Response headers policy ID: $RESPONSE_HEADERS_POLICY_ID"
           echo "HTTPS Frontend URL: https://$DOMAIN_NAME"
