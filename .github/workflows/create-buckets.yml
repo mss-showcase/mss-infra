@@ -39,15 +39,15 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: buckets      
+        working-directory: terraform/buckets      
         run: terraform init
 
       - name: Terraform Validate
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: | 
           terraform plan \
           -var="shared_data_bucket=$SHARED_DATA_BUCKET" \
@@ -55,7 +55,7 @@ jobs:
           -var="webhosting_bucket=$WEBHOSTING_BUCKET"
 
       - name: Terraform Import S3 data bucket
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: |
           terraform import \
           -var="shared_data_bucket=$SHARED_DATA_BUCKET" \
@@ -64,7 +64,7 @@ jobs:
           aws_s3_bucket.shared_data $SHARED_DATA_BUCKET || true
 
       - name: Terraform Import S3 build data bucket
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: |
           terraform import \
           -var="shared_data_bucket=$SHARED_DATA_BUCKET" \
@@ -73,7 +73,7 @@ jobs:
           aws_s3_bucket.shared_build_data $SHARED_BUILD_DATA_BUCKET || true
 
       - name: Terraform Import S3 webhosting bucket
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: |
           terraform import \
           -var="shared_data_bucket=$SHARED_DATA_BUCKET" \
@@ -82,7 +82,7 @@ jobs:
           aws_s3_bucket.webhosting $WEBHOSTING_BUCKET || true
 
       - name: Terraform Apply
-        working-directory: buckets
+        working-directory: terraform/buckets
         run: |
           terraform apply -auto-approve \
           -var="shared_data_bucket=$SHARED_DATA_BUCKET" \
