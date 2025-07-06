@@ -1,8 +1,6 @@
 name: Create or update configurations of S3 buckets
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
