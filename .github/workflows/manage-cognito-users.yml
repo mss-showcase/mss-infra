@@ -1,0 +1,104 @@
+name: Cognito User/Group Management
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  COGNITO_POOL_ID_FILE: ${{ vars.COGNITO_POOL_ID_FILE }}
+  COGNITO_ADMIN_USERNAME: ${{ vars.COGNITO_ADMIN_USERNAME }}
+  COGNITO_ADMIN_PASSWORD: ${{ secrets.COGNITO_ADMIN_PASSWORD }}
+
+jobs:
+  manage-cognito-users:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get Cognito User Pool ID
+        run: |
+          aws s3 cp s3://${{ vars.SHARED_BUILD_DATA_BUCKET }}/${{ env.COGNITO_POOL_ID_FILE }} $COGNITO_POOL_ID_FILE --region $AWS_REGION
+          if [ -f "$COGNITO_POOL_ID_FILE" ]; then
+            export USER_POOL_ID=$(cat "$COGNITO_POOL_ID_FILE" | tr -d '\n')
+            echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
+          else
+            echo "Cognito pool ID file not found! Exiting."
+            exit 1
+          fi
+
+      - name: Create admin user and groups
+        run: |
+          ADMIN_EMAIL="$COGNITO_ADMIN_USERNAME"
+          ADMIN_USERNAME="$COGNITO_ADMIN_USERNAME"
+
+          echo "Admin username: $ADMIN_USERNAME"
+          echo "Admin email: $ADMIN_EMAIL"
+
+          # Create admin user if not exists
+          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$ADMIN_USERNAME" --region "$AWS_REGION" || \
+          aws cognito-idp admin-create-user \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$ADMIN_USERNAME" \
+            --user-attributes Name=email,Value="$ADMIN_EMAIL" \
+            --message-action SUPPRESS \
+            --region "$AWS_REGION"
+
+          # Set admin password
+          aws cognito-idp admin-set-user-password \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$ADMIN_USERNAME" \
+            --password "$COGNITO_ADMIN_PASSWORD" \
+            --permanent \
+            --region "$AWS_REGION"
+
+          # Create groups if not exist
+          aws cognito-idp get-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+          aws cognito-idp create-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+          aws cognito-idp get-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+          aws cognito-idp create-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+
+          # Add admin user to admin group
+          aws cognito-idp admin-add-user-to-group \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$ADMIN_USERNAME" \
+            --group-name admin \
+            --region "$AWS_REGION"
+
+          # Create test user and add to user group
+          TESTUSER_EMAIL="testuser@example.com"
+          TESTUSER_USERNAME="testuser@example.com"
+          TESTUSER_PASSWORD="$COGNITO_ADMIN_PASSWORD"
+
+          echo "Test user: $TESTUSER_USERNAME"
+          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$TESTUSER_USERNAME" --region "$AWS_REGION" || \
+          aws cognito-idp admin-create-user \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$TESTUSER_USERNAME" \
+            --user-attributes Name=email,Value="$TESTUSER_EMAIL" \
+            --message-action SUPPRESS \
+            --region "$AWS_REGION"
+
+          aws cognito-idp admin-set-user-password \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$TESTUSER_USERNAME" \
+            --password "$TESTUSER_PASSWORD" \
+            --permanent \
+            --region "$AWS_REGION"
+
+          aws cognito-idp admin-add-user-to-group \
+            --user-pool-id "$USER_POOL_ID" \
+            --username "$TESTUSER_USERNAME" \
+            --group-name user \
+            --region "$AWS_REGION"

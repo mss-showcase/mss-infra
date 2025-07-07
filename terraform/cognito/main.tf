@@ -1,6 +1,7 @@
 
 
 
+
 # Data sources for existing resources
 data "aws_cognito_user_pool" "main" {
   count        = var.cognito_user_pool_id != "" ? 1 : 0
@@ -8,12 +9,13 @@ data "aws_cognito_user_pool" "main" {
 }
 
 data "aws_cognito_user_pool_client" "main" {
-  count        = var.cognito_user_pool_client_id != "" && var.cognito_user_pool_id != "" ? 1 : 0
+  count        = var.cognito_user_pool_id != "" ? 1 : 0
   user_pool_id = var.cognito_user_pool_id
   client_id    = var.cognito_user_pool_client_id
 }
 
 # Resources for new resources
+
 resource "aws_cognito_user_pool" "main" {
   count                    = var.cognito_user_pool_id == "" ? 1 : 0
   name                     = "mss-user-pool"
@@ -36,8 +38,9 @@ resource "aws_cognito_user_pool" "main" {
   }
 }
 
+
 resource "aws_cognito_user_pool_client" "main" {
-  count           = var.cognito_user_pool_client_id == "" && var.cognito_user_pool_id == "" ? 1 : 0
+  count           = var.cognito_user_pool_id == "" ? 1 : 0
   name            = "mss-user-pool-client"
   user_pool_id    = aws_cognito_user_pool.main[0].id
   generate_secret = false
@@ -59,6 +62,7 @@ resource "aws_cognito_user_pool_client" "main" {
   supported_identity_providers = ["COGNITO", "Google"]
 }
 
+
 # Google identity provider (only create if not using existing pool/client)
 resource "aws_cognito_identity_provider" "google" {
   count         = var.cognito_user_pool_id == "" ? 1 : 0
@@ -76,8 +80,9 @@ resource "aws_cognito_identity_provider" "google" {
   }
 }
 
+
 # Locals to select the correct IDs
 locals {
   user_pool_id        = var.cognito_user_pool_id != "" ? data.aws_cognito_user_pool.main[0].id : aws_cognito_user_pool.main[0].id
-  user_pool_client_id = var.cognito_user_pool_client_id != "" ? data.aws_cognito_user_pool_client.main[0].id : aws_cognito_user_pool_client.main[0].id
+  user_pool_client_id = var.cognito_user_pool_id != "" ? data.aws_cognito_user_pool_client.main[0].id : aws_cognito_user_pool_client.main[0].id
 }
