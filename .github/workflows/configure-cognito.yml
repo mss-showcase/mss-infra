@@ -316,6 +316,15 @@ jobs:
 
       - name: Create admin user and groups
         run: |
+          # Helper: Validate env variable value
+          validate_env_var() {
+            # $1 = varname
+            local val="${!1}"
+            if [[ -z "$val" || "$val" == "None" || "$val" == *"Warning: No outputs found"* ]]; then
+              eval "$1=''"
+            fi
+          }
+
           # Validate and construct admin email
           ADMIN_EMAIL="$COGNITO_ADMIN_USERNAME"
           ADMIN_USERNAME="$COGNITO_ADMIN_USERNAME"
@@ -323,8 +332,13 @@ jobs:
           echo "Admin username: $ADMIN_USERNAME"
           echo "Admin email: $ADMIN_EMAIL"
 
+          # Sanitize env vars before use
+          validate_env_var USER_POOL_ID
+          validate_env_var CLIENT_ID
+          validate_env_var GOOGLE_PROVIDER_NAME
+
           # Only proceed if USER_POOL_ID is valid
-          if [ -n "$USER_POOL_ID" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]]; then
+          if [ -n "$USER_POOL_ID" ]; then
             # Create admin user if not exists
             aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$ADMIN_USERNAME" --region "$AWS_REGION" || \
             aws cognito-idp admin-create-user \
