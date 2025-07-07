@@ -60,6 +60,11 @@ variable "cognito_pool_id" {
   type        = string
 }
 
+variable "cognito_pool_arn" {
+  description = "The ARN of the Cognito User Pool for user management permissions."
+  type        = string
+}
+
 variable "webhosting_website_url" {
   description = "S3 static website endpoint for shared webhosting bucket."
   type        = string

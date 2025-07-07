@@ -59,6 +59,20 @@ resource "aws_iam_policy" "mss_backend_lambda_policy" {
           var.fundamentals_table_arn,
           var.dynamodb_sentiment_articles_table_arn
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "cognito-idp:ListUsers",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:ListGroups"
+        ],
+        Resource = var.cognito_pool_arn
       }
     ]
   })

@@ -82,8 +82,11 @@ jobs:
           COGNITO_POOL_ID=$(tr -d '\n' < COGNITO_POOL_ID.txt)
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt
           CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)
+          # Fetch Cognito User Pool ARN
+          COGNITO_POOL_ARN=$(aws cognito-idp describe-user-pool --user-pool-id "$COGNITO_POOL_ID" --region "$AWS_REGION" --query "UserPool.Arn" --output text)
           echo "COGNITO_POOL_ID=$COGNITO_POOL_ID" >> $GITHUB_ENV
           echo "CLOUDFRONT_DOMAIN_NAME=$CLOUDFRONT_DOMAIN_NAME" >> $GITHUB_ENV
+          echo "COGNITO_POOL_ARN=$COGNITO_POOL_ARN" >> $GITHUB_ENV
           cat <<EOF > ci.auto.tfvars
           mss_backend_lambda_name = "${MSS_BACKEND_LAMBDA_NAME}"
           mss_backend_lambda_s3_key = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
@@ -92,11 +95,12 @@ jobs:
           ticks_table        = "${TICKS_TABLE}"
           ticks_table_arn    = "${TICKS_TABLE_ARN}"
           fundamentals_table = "${FUNDAMENTALS_TABLE}"
-          fundamentals_table_arn = "${FUNDAMENTALS_TABLE_ARN}"  
+          fundamentals_table_arn = "${FUNDAMENTALS_TABLE_ARN}"
           dynamodb_sentiment_articles_table = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE}"
           dynamodb_sentiment_articles_table_arn = "${DYNAMODB_SENTIMENT_ARTICLES_TABLE_ARN}"
           cloudfront_domain_name = "${CLOUDFRONT_DOMAIN_NAME}"
           cognito_pool_id = "${COGNITO_POOL_ID}"
+          cognito_pool_arn = "${COGNITO_POOL_ARN}"
           webhosting_website_url = "${WEBHOSTING_WEBSITE_URL}"
           EOF
 
