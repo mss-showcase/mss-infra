@@ -1,3 +1,4 @@
+
 # Set log group retention for Lambda logs 
 # expected retention_in_days to be one of [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1096 1827 2192 2557 2922 3288 3653], got 8
 resource "aws_cloudwatch_log_group" "mss_backend_lambda_log_group" {
@@ -139,6 +140,12 @@ resource "aws_apigatewayv2_route" "analysis_explanation_route" {
 resource "aws_apigatewayv2_route" "user_list_route" {
   api_id    = aws_apigatewayv2_api.mss_backend_api.id
   route_key = "GET /user/list"
+  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_setadmin_route" {
+  api_id    = aws_apigatewayv2_api.mss_backend_api.id
+  route_key = "GET /user/setadmin"
   target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
 }
 

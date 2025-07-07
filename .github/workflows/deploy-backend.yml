@@ -165,6 +165,7 @@ jobs:
             [user_me_get_route]="GET /user/me"
             [user_me_put_route]="PUT /user/me"
             [user_list_route]="GET /user/list"
+            [user_setadmin_route]="GET /user/setadmin"
           )
 
           for NAME in "${!ROUTES[@]}"; do
