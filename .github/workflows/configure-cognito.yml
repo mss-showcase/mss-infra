@@ -94,26 +94,28 @@ jobs:
           CLIENT_ID=""
           GOOGLE_PROVIDER_NAME=""
 
-          if [ -s "$COGNITO_POOL_ID_FILE" ]; then
-            USER_POOL_ID=$(tr -d '\0\n' < $COGNITO_POOL_ID_FILE | xargs)
-            if [ -n "$USER_POOL_ID" ]; then
-              echo "Found USER_POOL_ID in S3 file: $USER_POOL_ID"
-            fi
-          fi
 
-          if [ -s "$COGNITO_CLIENT_ID_FILE" ]; then
-            CLIENT_ID=$(tr -d '\0\n' < $COGNITO_CLIENT_ID_FILE | xargs)
-            if [ -n "$CLIENT_ID" ]; then
-              echo "Found CLIENT_ID in S3 file: $CLIENT_ID"
-            fi
-          fi
 
-          if [ -s COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
-            GOOGLE_PROVIDER_NAME=$(tr -d '\0\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt | xargs)
-            if [ -n "$GOOGLE_PROVIDER_NAME" ]; then
-              echo "Found GOOGLE_PROVIDER_NAME in S3 file: $GOOGLE_PROVIDER_NAME"
+          # Helper: Validate and echo a variable from a file
+          get_valid_var_from_file() {
+            # $1 = file, $2 = varname
+            local file="$1"
+            local __resultvar="$2"
+            local val=""
+            if [ -s "$file" ]; then
+              val=$(tr -d '\0\n' < "$file" | xargs)
+              if [[ -z "$val" || "$val" == "None" || "$val" == *"Warning: No outputs found"* ]]; then
+                val=""
+              else
+                echo "Found $2 in S3 file: $val"
+              fi
             fi
-          fi
+            eval "$__resultvar=\"$val\""
+          }
+
+          get_valid_var_from_file "$COGNITO_POOL_ID_FILE" USER_POOL_ID
+          get_valid_var_from_file "$COGNITO_CLIENT_ID_FILE" CLIENT_ID
+          get_valid_var_from_file COGNITO_GOOGLE_PROVIDER_NAME.txt GOOGLE_PROVIDER_NAME
 
           # If not found, try AWS CLI
           echo "Trying to fetch Cognito IDs from AWS CLI..."
@@ -178,20 +180,20 @@ jobs:
       - name: Import Cognito resources into Terraform state
         working-directory: terraform/cognito
         run: |
-          if [ -n "$USER_POOL_ID" ]; then
+          if [ -n "$USER_POOL_ID" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]]; then
             terraform import aws_cognito_user_pool.main "$USER_POOL_ID" || true
           else
-            echo "Skipping user pool import: USER_POOL_ID is empty"
+            echo "Skipping user pool import: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
           fi
-          if [ -n "$CLIENT_ID" ]; then
+          if [ -n "$CLIENT_ID" ] && [[ "$CLIENT_ID" != *"Warning: No outputs found"* ]] && [[ "$CLIENT_ID" != "None" ]]; then
             terraform import aws_cognito_user_pool_client.main "$CLIENT_ID" || true
           else
-            echo "Skipping user pool client import: CLIENT_ID is empty"
+            echo "Skipping user pool client import: CLIENT_ID is empty or invalid ($CLIENT_ID)"
           fi
-          if [ -n "$USER_POOL_ID" ] && [ -n "$GOOGLE_PROVIDER_NAME" ]; then
+          if [ -n "$USER_POOL_ID" ] && [ -n "$GOOGLE_PROVIDER_NAME" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]] && [[ "$GOOGLE_PROVIDER_NAME" != *"Warning: No outputs found"* ]] && [[ "$GOOGLE_PROVIDER_NAME" != "None" ]]; then
             terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
           else
-            echo "Skipping identity provider import: USER_POOL_ID or GOOGLE_PROVIDER_NAME is empty"
+            echo "Skipping identity provider import: USER_POOL_ID or GOOGLE_PROVIDER_NAME is empty or invalid ($USER_POOL_ID, $GOOGLE_PROVIDER_NAME)"
           fi
 
 
