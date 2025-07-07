@@ -110,7 +110,15 @@ jobs:
 
       - name: Terraform Apply
         working-directory: terraform/cognito
-        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
+        run: |
+          echo "USER_POOL_ID: $USER_POOL_ID"
+          echo "CLIENT_ID: $CLIENT_ID"
+          cat ci.auto.tfvars
+          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
+            echo "ERROR: USER_POOL_ID or CLIENT_ID is empty. Exiting."
+            exit 1
+          fi
+          terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
 
 
       - name: Upload Cognito IDs and admin password to S3
