@@ -36,11 +36,6 @@ jobs:
         with:
           terraform_wrapper: false
 
-      - name: Download CloudFront domain name from S3
-        run: |
-          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
-          echo "CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)" >> $GITHUB_ENV
-
       - name: Init Terraform
         working-directory: terraform/cognito
         run: terraform init -input=false -upgrade
@@ -72,9 +67,16 @@ jobs:
         id: cognito_ids
         run: |
           # Try to fetch IDs from S3 files first
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE $COGNITO_POOL_ID_FILE --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE $COGNITO_CLIENT_ID_FILE --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt COGNITO_GOOGLE_PROVIDER_NAME.txt --region $AWS_REGION || true
+          
+
+          if [ -f "$COGNITO_POOL_ID_FILE" ]; then
+            CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)
+            echo "Found CLOUDFRONT_DOMAIN_NAME in S3 file: $CLOUDFRONT_DOMAIN_NAME"
+          fi
 
           if [ -f "$COGNITO_POOL_ID_FILE" ]; then
             USER_POOL_ID=$(tr -d '\n' < $COGNITO_POOL_ID_FILE)
@@ -92,6 +94,7 @@ jobs:
           fi
 
           # If not found, try AWS CLI
+
           if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
             USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 --region "$AWS_REGION" --query "UserPools[?Name=='mss-user-pool'].Id" --output text | cut -f1)
           fi
@@ -109,6 +112,7 @@ jobs:
           fi
 
           # If still not found, try Terraform outputs
+
           if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
             cd terraform/cognito
             USER_POOL_ID=$(terraform output -raw user_pool_id 2>/dev/null || echo "")
@@ -127,16 +131,6 @@ jobs:
             cd ../..
           fi
 
-          if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
-            echo "Error: Could not find User Pool ID"
-            exit 1
-          fi
-
-          if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
-            echo "Error: Could not find User Pool Client ID"
-            exit 1
-          fi
-
           echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
           echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
 
@@ -151,9 +145,7 @@ jobs:
         run: |
           terraform import aws_cognito_user_pool.main $USER_POOL_ID || true
           terraform import aws_cognito_user_pool_client.main $CLIENT_ID || true
-          if [ -n "$GOOGLE_PROVIDER_NAME" ]; then
-            terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
-          fi
+          terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
 
       - name: Terraform Apply
         working-directory: terraform/cognito
