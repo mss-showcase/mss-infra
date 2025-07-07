@@ -54,7 +54,7 @@ resource "aws_cognito_user_pool_client" "main" {
     "https://${var.cloudfront_domain_name}/logout"
   ]
 
-  supported_identity_providers = var.cognito_user_pool_id == "" ? ["COGNITO", aws_cognito_identity_provider.google[0].provider_name] : ["COGNITO"]
+  supported_identity_providers = var.cognito_user_pool_id == "" ? ["COGNITO", aws_cognito_identity_provider.google[0].provider_name] : ["COGNITO", "Google"]
 
   depends_on = [aws_cognito_identity_provider.google]
 }
