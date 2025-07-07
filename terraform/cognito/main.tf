@@ -1,12 +1,6 @@
 
-# Use existing user pool if ID is provided, else create new
-data "aws_cognito_user_pool" "existing" {
-  count        = var.cognito_user_pool_id != "" ? 1 : 0
-  user_pool_id = var.cognito_user_pool_id
-}
 
 resource "aws_cognito_user_pool" "main" {
-  count = var.cognito_user_pool_id == "" ? 1 : 0
   name  = "mss-user-pool"
 
   auto_verified_attributes = ["email"]
@@ -32,7 +26,7 @@ resource "aws_cognito_user_pool" "main" {
 }
 
 locals {
-  user_pool_id = var.cognito_user_pool_id != "" ? var.cognito_user_pool_id : aws_cognito_user_pool.main[0].id
+  user_pool_id = aws_cognito_user_pool.main.id
 }
 
 
