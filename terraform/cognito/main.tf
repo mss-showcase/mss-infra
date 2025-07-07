@@ -30,15 +30,7 @@ locals {
 }
 
 
-# Use existing client if ID is provided, else create new
-data "aws_cognito_user_pool_client" "existing" {
-  count        = var.cognito_user_pool_client_id != "" && var.cognito_user_pool_id != "" ? 1 : 0
-  client_id    = var.cognito_user_pool_client_id
-  user_pool_id = local.user_pool_id
-}
-
 resource "aws_cognito_user_pool_client" "main" {
-  count        = var.cognito_user_pool_client_id == "" ? 1 : 0
   name         = "mss-user-pool-client"
   user_pool_id = local.user_pool_id
 
@@ -68,7 +60,7 @@ resource "aws_cognito_user_pool_client" "main" {
 }
 
 locals {
-  user_pool_client_id = var.cognito_user_pool_client_id != "" ? var.cognito_user_pool_client_id : aws_cognito_user_pool_client.main[0].id
+  user_pool_client_id = aws_cognito_user_pool_client.main.id
 }
 
 # Google identity provider (only create if not using existing pool/client)
