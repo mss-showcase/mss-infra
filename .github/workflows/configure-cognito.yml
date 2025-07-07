@@ -54,8 +54,8 @@ jobs:
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt COGNITO_GOOGLE_PROVIDER_NAME.txt --region $AWS_REGION || true
 
           # Only write valid, non-empty, non-warning values
-          if [ -f COGNITO_POOL_ID_FILE.txt ]; then
-            export USER_POOL_ID=$(cat COGNITO_POOL_ID_FILE.txt | tr -d '\n')
+          if [ -f "$COGNITO_POOL_ID_FILE" ]; then
+            export USER_POOL_ID=$(cat "$COGNITO_POOL_ID_FILE" | tr -d '\n')
             echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
             echo "USER_POOL_ID=$USER_POOL_ID"
           fi
