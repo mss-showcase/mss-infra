@@ -94,17 +94,19 @@ jobs:
           fi
 
           # If not found, try AWS CLI
-
+          echo "Trying to fetch Cognito IDs from AWS CLI..."
           if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
             USER_POOL_ID=$(aws cognito-idp list-user-pools --max-results 60 --region "$AWS_REGION" --query "UserPools[?Name=='mss-user-pool'].Id" --output text | cut -f1)
           fi
 
+          echo trying to fetch CLIENT_ID with USER_POOL_ID from AWS CLI...
           if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
             if [ -n "$USER_POOL_ID" ]; then
               CLIENT_ID=$(aws cognito-idp list-user-pool-clients --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "UserPoolClients[0].ClientId" --output text 2>/dev/null || echo "")
             fi
           fi
 
+          echo trying to fetch GOOGLE_PROVIDER_NAME with USER_POOL_ID from AWS CLI...
           if [ -z "$GOOGLE_PROVIDER_NAME" ] || [ "$GOOGLE_PROVIDER_NAME" = "None" ]; then
             if [ -n "$USER_POOL_ID" ]; then
               GOOGLE_PROVIDER_NAME=$(aws cognito-idp list-identity-providers --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" --query "Providers[?ProviderType=='Google'].ProviderName" --output text 2>/dev/null || echo "")
@@ -113,24 +115,28 @@ jobs:
 
           # If still not found, try Terraform outputs
 
+          echo "Trying to fetch USER_POOL_ID from Terraform outputs..."
           if [ -z "$USER_POOL_ID" ] || [ "$USER_POOL_ID" = "None" ]; then
             cd terraform/cognito
             USER_POOL_ID=$(terraform output -raw user_pool_id 2>/dev/null || echo "")
             cd ../..
           fi
 
+          echo trying to fetch CLIENT_ID from Terraform outputs...
           if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "None" ]; then
             cd terraform/cognito
             CLIENT_ID=$(terraform output -raw user_pool_client_id 2>/dev/null || echo "")
             cd ../..
           fi
 
+          echo trying to fetch GOOGLE_PROVIDER_NAME from Terraform outputs...
           if [ -z "$GOOGLE_PROVIDER_NAME" ] || [ "$GOOGLE_PROVIDER_NAME" = "None" ]; then
             cd terraform/cognito
             GOOGLE_PROVIDER_NAME=$(terraform output -raw google_identity_provider_name 2>/dev/null || echo "")
             cd ../..
           fi
 
+          echo "saving to env files..."
           echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
           echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
 
