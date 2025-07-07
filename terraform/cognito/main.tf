@@ -1,7 +1,7 @@
 
 
 resource "aws_cognito_user_pool" "main" {
-  name  = "mss-user-pool"
+  name = "mss-user-pool"
 
   auto_verified_attributes = ["email"]
   username_attributes      = ["email"]
