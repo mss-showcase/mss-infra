@@ -38,7 +38,7 @@ locals {
 
 # Use existing client if ID is provided, else create new
 data "aws_cognito_user_pool_client" "existing" {
-  count        = var.cognito_user_pool_client_id != "" ? 1 : 0
+  count        = var.cognito_user_pool_client_id != "" && var.cognito_user_pool_id != "" ? 1 : 0
   client_id    = var.cognito_user_pool_client_id
   user_pool_id = local.user_pool_id
 }
