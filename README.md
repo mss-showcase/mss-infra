@@ -83,12 +83,20 @@ Deploys the feed reader and the sentiment Lambda responsible for processing fina
 ## 4. MSS Backend Lambda, API Gateway & Cognito
 Deploys the backend Lambda, configures API Gateway routes for stock, fundamentals, sentiment data, and user management/authentication endpoints. This job also manages IAM permissions, environment variables, and integrates with Cognito for authentication and user management.
 
+## 5. Cognito User Pool & Identity Provider
+Creates or updates the Cognito User Pool, User Pool Client, and Google Identity Provider. This job supports both first-time creation and upsert (re-apply) scenarios, automatically handling import of existing resources if present. It also manages the upload of Cognito IDs to S3 for use by other jobs and environments.
+
+## 6. Cognito Admin (and other) User Management
+Creates or updates the Cognito admin user and sets the admin password. This job ensures the admin user exists and is configured with the correct credentials, uploading the password to S3 for reference by other jobs.
+
 **Deploy Order Recommendation:**
 1. CloudFront Key (provisions the CloudFront public key for signed URLs)
 2. CloudFront (provisions the CloudFront distribution for webhosting)
 3. MSS Stock Data Source Lambda
 4. MSS Deploy Data To Dynamo Lambda
 5. MSS Financial Sentiment Lambda
-6. MSS Backend Lambda, API Gateway & Cognito
+6. Cognito User Pool & Identity Provider
+7. Cognito Admin User Management
+8. MSS Backend Lambda, API Gateway & Cognito
 
-Each job is triggered manually via GitHub Actions. See the respective workflow files in `.github/workflows/` for details and customization options.
+Each job is triggered manually via GitHub Actions. See the respective workflow files in `.github/workflows/` for details and customization options, including `.github/workflows/configure-cognito.yml` for Cognito upsert and user management.
