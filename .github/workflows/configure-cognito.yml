@@ -57,14 +57,17 @@ jobs:
           if [ -f COGNITO_POOL_ID_FILE.txt ]; then
             export USER_POOL_ID=$(cat COGNITO_POOL_ID_FILE.txt | tr -d '\n')
             echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
+            echo "USER_POOL_ID=$USER_POOL_ID"
           fi
           if [ -f $COGNITO_CLIENT_ID_FILE ]; then
             export CLIENT_ID=$(cat $COGNITO_CLIENT_ID_FILE | tr -d '\n')
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
+            echo "CLIENT_ID=$CLIENT_ID"
           fi
           if [ -f COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
             export GOOGLE_PROVIDER_NAME=$(tr -d '\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt)
             echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
+            echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME"
           fi
 
       - name: Write Terraform variable file
