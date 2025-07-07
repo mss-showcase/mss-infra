@@ -7,7 +7,7 @@ data "aws_cognito_user_pool" "existing" {
 
 resource "aws_cognito_user_pool" "main" {
   count = var.cognito_user_pool_id == "" ? 1 : 0
-  name = "mss-user-pool"
+  name  = "mss-user-pool"
 
   auto_verified_attributes = ["email"]
   username_attributes      = ["email"]
@@ -38,8 +38,8 @@ locals {
 
 # Use existing client if ID is provided, else create new
 data "aws_cognito_user_pool_client" "existing" {
-  count      = var.cognito_user_pool_client_id != "" ? 1 : 0
-  client_id  = var.cognito_user_pool_client_id
+  count        = var.cognito_user_pool_client_id != "" ? 1 : 0
+  client_id    = var.cognito_user_pool_client_id
   user_pool_id = local.user_pool_id
 }
 
