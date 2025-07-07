@@ -40,6 +40,11 @@ jobs:
         working-directory: terraform/cognito
         run: terraform init -input=false -upgrade
 
+      - name: Download CloudFront domain name from S3
+        run: |
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
+          echo "CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)" >> $GITHUB_ENV
+
       - name: Write Terraform variable file
         working-directory: terraform/cognito
         run: |
@@ -67,28 +72,22 @@ jobs:
         id: cognito_ids
         run: |
           # Try to fetch IDs from S3 files first
-          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE $COGNITO_POOL_ID_FILE --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE $COGNITO_CLIENT_ID_FILE --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt COGNITO_GOOGLE_PROVIDER_NAME.txt --region $AWS_REGION || true
           
 
-          if [ -f "$COGNITO_POOL_ID_FILE" ]; then
-            CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)
-            echo "Found CLOUDFRONT_DOMAIN_NAME in S3 file: $CLOUDFRONT_DOMAIN_NAME"
-          fi
-
-          if [ -f "$COGNITO_POOL_ID_FILE" ]; then
+          if [ -s "$COGNITO_POOL_ID_FILE" ]; then
             USER_POOL_ID=$(tr -d '\n' < $COGNITO_POOL_ID_FILE)
             echo "Found USER_POOL_ID in S3 file: $USER_POOL_ID"
           fi
 
-          if [ -f "$COGNITO_CLIENT_ID_FILE" ]; then
+          if [ -s "$COGNITO_CLIENT_ID_FILE" ]; then
             CLIENT_ID=$(tr -d '\n' < $COGNITO_CLIENT_ID_FILE)
             echo "Found CLIENT_ID in S3 file: $CLIENT_ID"
           fi
 
-          if [ -f COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
+          if [ -s COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
             GOOGLE_PROVIDER_NAME=$(tr -d '\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt)
             echo "Found GOOGLE_PROVIDER_NAME in S3 file: $GOOGLE_PROVIDER_NAME"
           fi
