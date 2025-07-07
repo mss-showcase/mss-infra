@@ -68,10 +68,6 @@ jobs:
         working-directory: terraform/cognito
         run: terraform plan -input=false -var-file=ci.auto.tfvars
 
-      - name: Terraform Apply
-        working-directory: terraform/cognito
-        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
-
       - name: Get Cognito User Pool and Client IDs
         id: cognito_ids
         run: |
@@ -158,6 +154,10 @@ jobs:
           if [ -n "$GOOGLE_PROVIDER_NAME" ]; then
             terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
           fi
+
+      - name: Terraform Apply
+        working-directory: terraform/cognito
+        run: terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
 
       - name: Create admin user and groups
         run: |
