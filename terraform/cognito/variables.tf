@@ -1,3 +1,15 @@
+# Optional: Use existing Cognito User Pool and Client
+variable "cognito_user_pool_id" {
+  description = "Existing Cognito User Pool ID (optional)"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_user_pool_client_id" {
+  description = "Existing Cognito User Pool Client ID (optional)"
+  type        = string
+  default     = ""
+}
 # AWS region (from GitHub org variable AWS_REGION)
 variable "aws_region" {
   description = "AWS region for constructing URLs"

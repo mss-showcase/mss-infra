@@ -1,4 +1,12 @@
+
+# Use existing user pool if ID is provided, else create new
+data "aws_cognito_user_pool" "existing" {
+  count        = var.cognito_user_pool_id != "" ? 1 : 0
+  user_pool_id = var.cognito_user_pool_id
+}
+
 resource "aws_cognito_user_pool" "main" {
+  count = var.cognito_user_pool_id == "" ? 1 : 0
   name = "mss-user-pool"
 
   auto_verified_attributes = ["email"]
@@ -21,14 +29,24 @@ resource "aws_cognito_user_pool" "main" {
   admin_create_user_config {
     allow_admin_create_user_only = false # allow self sign-up
   }
+}
 
-  # Allow users to sign up and sign in with any OAuth provider (to be attached below)
-  # The actual provider configs are attached to the user pool client below
+locals {
+  user_pool_id = var.cognito_user_pool_id != "" ? var.cognito_user_pool_id : aws_cognito_user_pool.main[0].id
+}
+
+
+# Use existing client if ID is provided, else create new
+data "aws_cognito_user_pool_client" "existing" {
+  count      = var.cognito_user_pool_client_id != "" ? 1 : 0
+  client_id  = var.cognito_user_pool_client_id
+  user_pool_id = local.user_pool_id
 }
 
 resource "aws_cognito_user_pool_client" "main" {
+  count        = var.cognito_user_pool_client_id == "" ? 1 : 0
   name         = "mss-user-pool-client"
-  user_pool_id = aws_cognito_user_pool.main.id
+  user_pool_id = local.user_pool_id
 
   generate_secret = false
 
@@ -43,8 +61,6 @@ resource "aws_cognito_user_pool_client" "main" {
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
   allowed_oauth_flows_user_pool_client = true
 
-
-  # Use CloudFront HTTPS domain for callback/logout URLs
   callback_urls = [
     "https://${var.cloudfront_domain_name}/callback"
   ]
@@ -57,9 +73,14 @@ resource "aws_cognito_user_pool_client" "main" {
   depends_on = [aws_cognito_identity_provider.google]
 }
 
-# Google identity provider
+locals {
+  user_pool_client_id = var.cognito_user_pool_client_id != "" ? var.cognito_user_pool_client_id : aws_cognito_user_pool_client.main[0].id
+}
+
+# Google identity provider (only create if not using existing pool/client)
 resource "aws_cognito_identity_provider" "google" {
-  user_pool_id  = aws_cognito_user_pool.main.id
+  count         = var.cognito_user_pool_id == "" ? 1 : 0
+  user_pool_id  = local.user_pool_id
   provider_name = "Google"
   provider_type = "Google"
   provider_details = {
