@@ -137,14 +137,20 @@ jobs:
           fi
 
           echo "saving to env files..."
-          echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
-          echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
+          if [ -n "$USER_POOL_ID" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]]; then
+            echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
+            echo "$USER_POOL_ID" > $COGNITO_POOL_ID_FILE
+          fi
 
-          echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
-          echo "$CLIENT_ID" > $COGNITO_CLIENT_ID_FILE
+          if [ -n "$CLIENT_ID" ] && [[ "$CLIENT_ID" != *"Warning: No outputs found"* ]]; then
+            echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
+            echo "$CLIENT_ID" > $COGNITO_CLIENT_ID_FILE
+          fi
 
-          echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
-          echo "$GOOGLE_PROVIDER_NAME" > COGNITO_GOOGLE_PROVIDER_NAME.txt
+          if [ -n "$GOOGLE_PROVIDER_NAME" ] && [[ "$GOOGLE_PROVIDER_NAME" != *"Warning: No outputs found"* ]]; then
+            echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
+            echo "$GOOGLE_PROVIDER_NAME" > COGNITO_GOOGLE_PROVIDER_NAME.txt
+          fi
  
       - name: Import Cognito resources into Terraform state
         working-directory: terraform/cognito
