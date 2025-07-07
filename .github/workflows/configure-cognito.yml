@@ -124,6 +124,10 @@ jobs:
           terraform output -raw user_pool_id 2>/dev/null | xargs > ../../$COGNITO_POOL_ID_FILE
           terraform output -raw user_pool_client_id 2>/dev/null | xargs > ../../$COGNITO_CLIENT_ID_FILE
           terraform output -raw google_identity_provider_name 2>/dev/null | xargs > ../../COGNITO_GOOGLE_PROVIDER_NAME.txt
+          # If the file is empty, default to "Google"
+          if [ ! -s ../../COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
+            echo "Google" > ../../COGNITO_GOOGLE_PROVIDER_NAME.txt
+          fi
           cd ../..
 
           aws s3 cp $COGNITO_POOL_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE
