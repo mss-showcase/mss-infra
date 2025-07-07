@@ -178,9 +178,21 @@ jobs:
       - name: Import Cognito resources into Terraform state
         working-directory: terraform/cognito
         run: |
-          terraform import aws_cognito_user_pool.main $USER_POOL_ID || true
-          terraform import aws_cognito_user_pool_client.main $CLIENT_ID || true
-          terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
+          if [ -n "$USER_POOL_ID" ]; then
+            terraform import aws_cognito_user_pool.main "$USER_POOL_ID" || true
+          else
+            echo "Skipping user pool import: USER_POOL_ID is empty"
+          fi
+          if [ -n "$CLIENT_ID" ]; then
+            terraform import aws_cognito_user_pool_client.main "$CLIENT_ID" || true
+          else
+            echo "Skipping user pool client import: CLIENT_ID is empty"
+          fi
+          if [ -n "$USER_POOL_ID" ] && [ -n "$GOOGLE_PROVIDER_NAME" ]; then
+            terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
+          else
+            echo "Skipping identity provider import: USER_POOL_ID or GOOGLE_PROVIDER_NAME is empty"
+          fi
 
       - name: Terraform Apply
         working-directory: terraform/cognito
@@ -191,39 +203,44 @@ jobs:
           # Validate and construct admin email
           ADMIN_EMAIL="$COGNITO_ADMIN_USERNAME"
           ADMIN_USERNAME="$COGNITO_ADMIN_USERNAME"
-          
+
           echo "Admin username: $ADMIN_USERNAME"
           echo "Admin email: $ADMIN_EMAIL"
-          
-          # Create admin user if not exists
-          aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$ADMIN_USERNAME" --region "$AWS_REGION" || \
-          aws cognito-idp admin-create-user \
-            --user-pool-id "$USER_POOL_ID" \
-            --username "$ADMIN_USERNAME" \
-            --user-attributes Name=email,Value="$ADMIN_EMAIL" \
-            --message-action SUPPRESS \
-            --region "$AWS_REGION"
 
-          # Set admin password
-          aws cognito-idp admin-set-user-password \
-            --user-pool-id "$USER_POOL_ID" \
-            --username "$ADMIN_USERNAME" \
-            --password "$COGNITO_ADMIN_PASSWORD" \
-            --permanent \
-            --region "$AWS_REGION"
+          # Only proceed if USER_POOL_ID is valid
+          if [ -n "$USER_POOL_ID" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]]; then
+            # Create admin user if not exists
+            aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$ADMIN_USERNAME" --region "$AWS_REGION" || \
+            aws cognito-idp admin-create-user \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$ADMIN_USERNAME" \
+              --user-attributes Name=email,Value="$ADMIN_EMAIL" \
+              --message-action SUPPRESS \
+              --region "$AWS_REGION"
 
-          # Create groups if not exist
-          aws cognito-idp get-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
-          aws cognito-idp create-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
-          aws cognito-idp get-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
-          aws cognito-idp create-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+            # Set admin password
+            aws cognito-idp admin-set-user-password \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$ADMIN_USERNAME" \
+              --password "$COGNITO_ADMIN_PASSWORD" \
+              --permanent \
+              --region "$AWS_REGION"
 
-          # Add admin user to admin group
-          aws cognito-idp admin-add-user-to-group \
-            --user-pool-id "$USER_POOL_ID" \
-            --username "$ADMIN_USERNAME" \
-            --group-name admin \
-            --region "$AWS_REGION"
+            # Create groups if not exist
+            aws cognito-idp get-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+            aws cognito-idp create-group --group-name admin --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+            aws cognito-idp get-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION" || \
+            aws cognito-idp create-group --group-name user --user-pool-id "$USER_POOL_ID" --region "$AWS_REGION"
+
+            # Add admin user to admin group
+            aws cognito-idp admin-add-user-to-group \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$ADMIN_USERNAME" \
+              --group-name admin \
+              --region "$AWS_REGION"
+          else
+            echo "Skipping admin user/group creation: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
+          fi
 
       - name: Upload Cognito IDs and admin password to S3
         run: |
