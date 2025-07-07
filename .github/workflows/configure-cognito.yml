@@ -186,6 +186,33 @@ jobs:
               --username "$ADMIN_USERNAME" \
               --group-name admin \
               --region "$AWS_REGION"
+
+            # Create test user and add to user group
+            TESTUSER_EMAIL="testuser@example.com"
+            TESTUSER_USERNAME="testuser@example.com"
+            TESTUSER_PASSWORD="$COGNITO_ADMIN_PASSWORD"
+
+            echo "Test user: $TESTUSER_USERNAME"
+            aws cognito-idp admin-get-user --user-pool-id "$USER_POOL_ID" --username "$TESTUSER_USERNAME" --region "$AWS_REGION" || \
+            aws cognito-idp admin-create-user \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$TESTUSER_USERNAME" \
+              --user-attributes Name=email,Value="$TESTUSER_EMAIL" \
+              --message-action SUPPRESS \
+              --region "$AWS_REGION"
+
+            aws cognito-idp admin-set-user-password \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$TESTUSER_USERNAME" \
+              --password "$TESTUSER_PASSWORD" \
+              --permanent \
+              --region "$AWS_REGION"
+
+            aws cognito-idp admin-add-user-to-group \
+              --user-pool-id "$USER_POOL_ID" \
+              --username "$TESTUSER_USERNAME" \
+              --group-name user \
+              --region "$AWS_REGION"
           else
             echo "Skipping admin user/group creation: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
           fi
