@@ -93,15 +93,13 @@ jobs:
       - name: Import Cognito resources into Terraform state
         working-directory: terraform/cognito
         run: |
-          if [ -n "$USER_POOL_ID" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]]; then
+          if [ -n "$USER_POOL_ID" ] && [ -n "$CLIENT_ID" ] \
+            && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]] \
+            && [[ "$CLIENT_ID" != *"Warning: No outputs found"* ]] && [[ "$CLIENT_ID" != "None" ]]; then
             terraform import aws_cognito_user_pool.main "$USER_POOL_ID" || true
+            terraform import aws_cognito_user_pool_client.main "$USER_POOL_ID/$CLIENT_ID" || true
           else
-            echo "Skipping user pool import: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
-          fi
-          if [ -n "$CLIENT_ID" ] && [[ "$CLIENT_ID" != *"Warning: No outputs found"* ]] && [[ "$CLIENT_ID" != "None" ]]; then
-            terraform import aws_cognito_user_pool_client.main "$CLIENT_ID" || true
-          else
-            echo "Skipping user pool client import: CLIENT_ID is empty or invalid ($CLIENT_ID)"
+            echo "Skipping user pool and client import: USER_POOL_ID or CLIENT_ID is empty or invalid ($USER_POOL_ID, $CLIENT_ID)"
           fi
           if [ -n "$USER_POOL_ID" ] && [ -n "$GOOGLE_PROVIDER_NAME" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]] && [[ "$GOOGLE_PROVIDER_NAME" != *"Warning: No outputs found"* ]] && [[ "$GOOGLE_PROVIDER_NAME" != "None" ]]; then
             terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
