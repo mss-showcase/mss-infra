@@ -53,7 +53,6 @@ jobs:
           # Try to fetch IDs from S3 files first
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE $COGNITO_POOL_ID_FILE --region $AWS_REGION || true
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE $COGNITO_CLIENT_ID_FILE --region $AWS_REGION || true
-          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt COGNITO_GOOGLE_PROVIDER_NAME.txt --region $AWS_REGION || true
 
           # Only write valid, non-empty, non-warning values
           if [ -f "$COGNITO_POOL_ID_FILE" ]; then
@@ -65,11 +64,6 @@ jobs:
             export CLIENT_ID=$(cat "$COGNITO_CLIENT_ID_FILE" | tr -d '\n')
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
             echo "CLIENT_ID=$CLIENT_ID"
-          fi
-          if [ -f COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
-            export GOOGLE_PROVIDER_NAME=$(tr -d '\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt)
-            echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
-            echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME"
           fi
 
       - name: Write Terraform variable file
@@ -108,10 +102,10 @@ jobs:
           else
             echo "Skipping user pool and client import: USER_POOL_ID or CLIENT_ID is empty or invalid ($USER_POOL_ID, $CLIENT_ID)"
           fi
-          if [ -n "$USER_POOL_ID" ] && [ -n "$GOOGLE_PROVIDER_NAME" ] && [[ "$USER_POOL_ID" != *"Warning: No outputs found"* ]] && [[ "$USER_POOL_ID" != "None" ]] && [[ "$GOOGLE_PROVIDER_NAME" != *"Warning: No outputs found"* ]] && [[ "$GOOGLE_PROVIDER_NAME" != "None" ]]; then
-            terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":$GOOGLE_PROVIDER_NAME || true
+          if [ -n "$USER_POOL_ID" ]; then
+            terraform import aws_cognito_identity_provider.google "$USER_POOL_ID":Google || true
           else
-            echo "Skipping identity provider import: USER_POOL_ID or GOOGLE_PROVIDER_NAME is empty or invalid ($USER_POOL_ID, $GOOGLE_PROVIDER_NAME)"
+            echo "Skipping identity provider import: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
           fi
 
       - name: Terraform Apply
@@ -125,15 +119,9 @@ jobs:
           # Save Terraform outputs to files and upload to S3
           terraform output -raw user_pool_id 2>/dev/null | xargs > $COGNITO_POOL_ID_FILE
           terraform output -raw user_pool_client_id 2>/dev/null | xargs > $COGNITO_CLIENT_ID_FILE
-          terraform output -raw google_identity_provider_name 2>/dev/null | xargs > COGNITO_GOOGLE_PROVIDER_NAME.txt
-          # If the file is empty, default to "Google"
-          if [ ! -s COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
-            echo "Google" > COGNITO_GOOGLE_PROVIDER_NAME.txt
-          fi
 
           aws s3 cp $COGNITO_POOL_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE
           aws s3 cp $COGNITO_CLIENT_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE
-          aws s3 cp COGNITO_GOOGLE_PROVIDER_NAME.txt s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt
 
       - name: Re-fetch Cognito outputs after apply
         working-directory: terraform/cognito
@@ -146,10 +134,6 @@ jobs:
           if [ -f "$COGNITO_CLIENT_ID_FILE" ]; then
             export CLIENT_ID=$(cat "$COGNITO_CLIENT_ID_FILE" | tr -d '\n')
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
-          fi
-          if [ -f COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
-            export GOOGLE_PROVIDER_NAME=$(tr -d '\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt)
-            echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
           fi
 
       - name: Create admin user and groups
@@ -177,9 +161,7 @@ jobs:
           echo "Client ID : $CLIENT_ID before validation"
           validate_env_var CLIENT_ID
           echo "Client ID : $CLIENT_ID after validation"
-          echo "Google provider name: $GOOGLE_PROVIDER_NAME before validation"
-          validate_env_var GOOGLE_PROVIDER_NAME
-          echo "Google provider name: $GOOGLE_PROVIDER_NAME after validation"
+          # Google provider name is always "Google"
 
           # Only proceed if USER_POOL_ID is valid
           if [ -n "$USER_POOL_ID" ]; then
