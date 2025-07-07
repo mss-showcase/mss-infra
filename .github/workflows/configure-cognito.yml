@@ -108,16 +108,13 @@ jobs:
             echo "Skipping identity provider import: USER_POOL_ID is empty or invalid ($USER_POOL_ID)"
           fi
 
-      - name: Terraform Apply
+      - name: Terraform Apply (Upsert Mode)
         working-directory: terraform/cognito
         run: |
           echo "USER_POOL_ID: $USER_POOL_ID"
           echo "CLIENT_ID: $CLIENT_ID"
           cat ci.auto.tfvars
-          if [ -z "$USER_POOL_ID" ] || [ -z "$CLIENT_ID" ]; then
-            echo "ERROR: USER_POOL_ID or CLIENT_ID is empty. Exiting."
-            exit 1
-          fi
+          # Always run apply, regardless of whether IDs are present (fire-and-forget)
           terraform apply -input=false -auto-approve -var-file=ci.auto.tfvars
 
 
