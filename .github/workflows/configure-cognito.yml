@@ -41,12 +41,14 @@ jobs:
         run: terraform init -input=false -upgrade
 
       - name: Download CloudFront domain name from S3
+        working-directory: terraform/cognito
         run: |
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/CLOUDFRONT_DOMAIN_NAME.txt CLOUDFRONT_DOMAIN_NAME.txt --region $AWS_REGION
           echo "CLOUDFRONT_DOMAIN_NAME=$(tr -d '\n' < CLOUDFRONT_DOMAIN_NAME.txt)" >> $GITHUB_ENV
 
       - name: Get Cognito User Pool and Client IDs
         id: cognito_ids
+        working-directory: terraform/cognito
         run: |
           # Try to fetch IDs from S3 files first
           aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE $COGNITO_POOL_ID_FILE --region $AWS_REGION || true
@@ -59,8 +61,8 @@ jobs:
             echo "USER_POOL_ID=$USER_POOL_ID" >> $GITHUB_ENV
             echo "USER_POOL_ID=$USER_POOL_ID"
           fi
-          if [ -f $COGNITO_CLIENT_ID_FILE ]; then
-            export CLIENT_ID=$(cat $COGNITO_CLIENT_ID_FILE | tr -d '\n')
+          if [ -f "$COGNITO_CLIENT_ID_FILE" ]; then
+            export CLIENT_ID=$(cat "$COGNITO_CLIENT_ID_FILE" | tr -d '\n')
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
             echo "CLIENT_ID=$CLIENT_ID"
           fi
@@ -118,23 +120,23 @@ jobs:
 
 
       - name: Upload Cognito IDs and admin password to S3
+        working-directory: terraform/cognito
         run: |
           # Save Terraform outputs to files and upload to S3
-          cd terraform/cognito
-          terraform output -raw user_pool_id 2>/dev/null | xargs > ../../$COGNITO_POOL_ID_FILE
-          terraform output -raw user_pool_client_id 2>/dev/null | xargs > ../../$COGNITO_CLIENT_ID_FILE
-          terraform output -raw google_identity_provider_name 2>/dev/null | xargs > ../../COGNITO_GOOGLE_PROVIDER_NAME.txt
+          terraform output -raw user_pool_id 2>/dev/null | xargs > $COGNITO_POOL_ID_FILE
+          terraform output -raw user_pool_client_id 2>/dev/null | xargs > $COGNITO_CLIENT_ID_FILE
+          terraform output -raw google_identity_provider_name 2>/dev/null | xargs > COGNITO_GOOGLE_PROVIDER_NAME.txt
           # If the file is empty, default to "Google"
-          if [ ! -s ../../COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
-            echo "Google" > ../../COGNITO_GOOGLE_PROVIDER_NAME.txt
+          if [ ! -s COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
+            echo "Google" > COGNITO_GOOGLE_PROVIDER_NAME.txt
           fi
-          cd ../..
 
           aws s3 cp $COGNITO_POOL_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_POOL_ID_FILE
           aws s3 cp $COGNITO_CLIENT_ID_FILE s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE
           aws s3 cp COGNITO_GOOGLE_PROVIDER_NAME.txt s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_GOOGLE_PROVIDER_NAME.txt
 
       - name: Re-fetch Cognito outputs after apply
+        working-directory: terraform/cognito
         run: |
           # Re-read the latest Cognito output files and export to env
           if [ -f "$COGNITO_POOL_ID_FILE" ]; then
@@ -145,7 +147,7 @@ jobs:
             export CLIENT_ID=$(cat "$COGNITO_CLIENT_ID_FILE" | tr -d '\n')
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
           fi
-          if [ -f "COGNITO_GOOGLE_PROVIDER_NAME.txt" ]; then
+          if [ -f COGNITO_GOOGLE_PROVIDER_NAME.txt ]; then
             export GOOGLE_PROVIDER_NAME=$(tr -d '\n' < COGNITO_GOOGLE_PROVIDER_NAME.txt)
             echo "GOOGLE_PROVIDER_NAME=$GOOGLE_PROVIDER_NAME" >> $GITHUB_ENV
           fi
