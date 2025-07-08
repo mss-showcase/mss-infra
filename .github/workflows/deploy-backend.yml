@@ -87,6 +87,8 @@ jobs:
           echo "COGNITO_POOL_ID=$COGNITO_POOL_ID" >> $GITHUB_ENV
           echo "CLOUDFRONT_DOMAIN_NAME=$CLOUDFRONT_DOMAIN_NAME" >> $GITHUB_ENV
           echo "COGNITO_POOL_ARN=$COGNITO_POOL_ARN" >> $GITHUB_ENV
+          aws s3 cp s3://$SHARED_BUILD_DATA_BUCKET/$COGNITO_CLIENT_ID_FILE COGNITO_CLIENT_ID.txt
+          COGNITO_USER_POOL_CLIENT_ID=$(tr -d '\n' < COGNITO_CLIENT_ID.txt)
           cat <<EOF > ci.auto.tfvars
           mss_backend_lambda_name = "${MSS_BACKEND_LAMBDA_NAME}"
           mss_backend_lambda_s3_key = "${MSS_BACKEND_LAMBDA_LOCATION_ON_BUCKET#'/'}"
@@ -102,6 +104,7 @@ jobs:
           cognito_pool_id = "${COGNITO_POOL_ID}"
           cognito_pool_arn = "${COGNITO_POOL_ARN}"
           webhosting_website_url = "${WEBHOSTING_WEBSITE_URL}"
+          cognito_user_pool_client_id = "${COGNITO_USER_POOL_CLIENT_ID}"
           EOF
 
       - name: Terraform plan
@@ -169,8 +172,8 @@ jobs:
             [user_me_get_route]="GET /user/me"
             [user_me_put_route]="PUT /user/me"
             [user_list_route]="GET /user/list"
-            [user_setadmin_route]="GET /user/setadmin"
-            [user_setenabled_route]="GET /user/setenabled"
+            [user_setadmin_route]="PUT /user/setadmin"
+            [user_setenabled_route]="PUT /user/setenabled"
           )
 
           for NAME in "${!ROUTES[@]}"; do
