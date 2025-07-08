@@ -69,3 +69,13 @@ variable "webhosting_website_url" {
   description = "S3 static website endpoint for shared webhosting bucket."
   type        = string
 }
+
+variable "cognito_user_pool_client_id" {
+  description = "Cognito User Pool App Client ID for JWT authorizer."
+  type        = string
+}
+
+variable "aws_region" {
+  description = "AWS region for API Gateway authorizer issuer URL."
+  type        = string
+}

@@ -1,3 +1,14 @@
+# Cognito JWT Authorizer for API Gateway
+resource "aws_apigatewayv2_authorizer" "cognito_jwt" {
+  api_id           = aws_apigatewayv2_api.mss_backend_api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "CognitoJWT"
+  jwt_configuration {
+    audience = [var.cognito_user_pool_client_id]
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_pool_id}"
+  }
+}
 
 # Set log group retention for Lambda logs 
 # expected retention_in_days to be one of [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1096 1827 2192 2557 2922 3288 3653], got 8
@@ -152,15 +163,28 @@ resource "aws_apigatewayv2_route" "analysis_explanation_route" {
 }
 
 resource "aws_apigatewayv2_route" "user_list_route" {
-  api_id    = aws_apigatewayv2_api.mss_backend_api.id
-  route_key = "GET /user/list"
-  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+  api_id             = aws_apigatewayv2_api.mss_backend_api.id
+  route_key          = "GET /user/list"
+  target             = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+  authorization_type = "JWT"
 }
 
 resource "aws_apigatewayv2_route" "user_setadmin_route" {
-  api_id    = aws_apigatewayv2_api.mss_backend_api.id
-  route_key = "GET /user/setadmin"
-  target    = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+  api_id             = aws_apigatewayv2_api.mss_backend_api.id
+  route_key          = "PUT /user/setadmin"
+  target             = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+  authorization_type = "JWT"
+}
+
+# Protect /user/setenabled with Cognito JWT authorizer
+resource "aws_apigatewayv2_route" "user_setenabled_route" {
+  api_id             = aws_apigatewayv2_api.mss_backend_api.id
+  route_key          = "PUT /user/setenabled"
+  target             = "integrations/${aws_apigatewayv2_integration.mss_backend_lambda_integration.id}"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito_jwt.id
+  authorization_type = "JWT"
 }
 
 resource "aws_apigatewayv2_stage" "mss_backend_stage" {

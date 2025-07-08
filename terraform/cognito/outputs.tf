@@ -12,3 +12,8 @@ output "google_provider_name" {
   description = "Name of the Google identity provider"
   value       = "Google"
 }
+
+output "user_pool_arn" {
+  description = "ARN of the Cognito User Pool"
+  value       = data.aws_cognito_user_pool.main[0].arn
+}

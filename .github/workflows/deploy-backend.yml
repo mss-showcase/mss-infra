@@ -170,6 +170,7 @@ jobs:
             [user_me_put_route]="PUT /user/me"
             [user_list_route]="GET /user/list"
             [user_setadmin_route]="GET /user/setadmin"
+            [user_setenabled_route]="GET /user/setenabled"
           )
 
           for NAME in "${!ROUTES[@]}"; do

@@ -141,3 +141,10 @@ jobs:
             echo "CLIENT_ID=$CLIENT_ID" >> $GITHUB_ENV
           fi
 
+      - name: Export Cognito User Pool ARN
+        working-directory: terraform/cognito
+        run: |
+          # Export Cognito User Pool ARN to file and upload to S3
+          terraform output -raw user_pool_arn 2>/dev/null | xargs > COGNITO_POOL_ARN.txt
+          aws s3 cp COGNITO_POOL_ARN.txt s3://$SHARED_BUILD_DATA_BUCKET/COGNITO_POOL_ARN.txt
+
