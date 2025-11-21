@@ -71,7 +71,7 @@ resource "aws_lambda_function" "stock_data_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.artifact_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 60
 
@@ -135,7 +135,7 @@ resource "aws_lambda_function" "fundamentals_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.fundamentals_artifact_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.fundamentals_lambda_exec_role.arn
   timeout       = 60
 

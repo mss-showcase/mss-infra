@@ -22,7 +22,7 @@ resource "aws_lambda_function" "mss_backend_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.mss_backend_lambda_s3_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 30
 
