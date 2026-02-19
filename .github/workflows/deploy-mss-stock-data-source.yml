@@ -39,6 +39,11 @@ jobs:
         run: |
           aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/deploy/mss-stock-data-source/${MSS_STOCK_DATA_SOURCE_VERSION}/${LAMBDA_ZIP_IN_BUILD_BUCKET} $LOCAL_LAMBDA_FILE.zip
 
+      - name: Download CloudFront key group ID from S3
+        run: |
+          aws s3 cp s3://${SHARED_BUILD_DATA_BUCKET}/CLOUDFRONT_KEY_GROUP_ID.txt CLOUDFRONT_KEY_GROUP_ID.txt
+          echo "CLOUDFRONT_KEY_GROUP_ID=$(cat CLOUDFRONT_KEY_GROUP_ID.txt)" >> $GITHUB_ENV
+
       - name: Init Terraform
         working-directory: terraform/mss-stock-data-source
         run: terraform init -input=false -upgrade
@@ -58,6 +63,7 @@ jobs:
           lambda_version            = "${MSS_STOCK_DATA_SOURCE_VERSION}"
           app_data_bucket           = "${SHARED_DATA_BUCKET}"
           build_data_bucket         = "${SHARED_BUILD_DATA_BUCKET}"
+          cloudfront_key_group_id   = "${CLOUDFRONT_KEY_GROUP_ID}"
           lambda_name               = "${TICKS_LAMBDA_NAME}"
           fundamentals_lambda_name  = "${FUNDAMENTALS_LAMBDA_NAME}"
           alphavantage_api_key      = "${ALPHAVANTAGE_API_KEY}"

@@ -112,7 +112,7 @@ resource "aws_lambda_function" "stock_data_to_dynamo" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.s3_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 60
 

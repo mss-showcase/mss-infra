@@ -71,7 +71,7 @@ resource "aws_lambda_function" "stock_data_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.artifact_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.lambda_exec_role.arn
   timeout       = 60
 
@@ -86,7 +86,7 @@ resource "aws_lambda_function" "stock_data_lambda" {
 
 resource "aws_cloudwatch_event_rule" "every_half_hour" {
   name                = "${var.lambda_name}-schedule"
-  schedule_expression = "cron(0/30 9-17 ? * MON-FRI *)"
+  schedule_expression = "cron(0 0 * * ? *)" # Once a day, 00:00 UTC
 }
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
@@ -135,7 +135,7 @@ resource "aws_lambda_function" "fundamentals_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.fundamentals_artifact_key
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   role          = aws_iam_role.fundamentals_lambda_exec_role.arn
   timeout       = 60
 

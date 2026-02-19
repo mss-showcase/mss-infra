@@ -104,7 +104,7 @@ resource "aws_lambda_function" "feed_reader_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.artifact_key
   handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime       = "python3.11"
+  runtime       = "python3.13"
   role          = aws_iam_role.sentiment_lambda_exec_role.arn
   timeout       = 60
   environment {
@@ -123,7 +123,7 @@ resource "aws_lambda_function" "financial_sentiment_lambda" {
   s3_bucket     = var.build_data_bucket
   s3_key        = var.artifact_key
   handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime       = "python3.11"
+  runtime       = "python3.13"
   role          = aws_iam_role.sentiment_lambda_exec_role.arn
   timeout       = 300
   environment {
