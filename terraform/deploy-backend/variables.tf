@@ -93,7 +93,8 @@ variable "api_throttle_burst_limit" {
 }
 
 variable "backend_lambda_concurrency" {
-  description = "Reserved concurrent executions for the backend Lambda."
+  description = "Reserved concurrent executions for the backend Lambda. Leave null on accounts where total Lambda concurrency is 10 (cannot reserve any)."
   type        = number
-  default     = 10
+  default     = null
+  nullable    = true
 }

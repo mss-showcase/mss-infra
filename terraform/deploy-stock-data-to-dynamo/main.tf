@@ -114,8 +114,7 @@ resource "aws_lambda_function" "stock_data_to_dynamo" {
   handler                        = "index.handler"
   runtime                        = "nodejs22.x"
   role                           = aws_iam_role.lambda_exec_role.arn
-  timeout                        = 60
-  reserved_concurrent_executions = 1
+  timeout = 60
 
   environment {
     variables = {

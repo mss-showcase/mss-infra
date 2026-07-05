@@ -106,8 +106,8 @@ resource "aws_lambda_function" "feed_reader_lambda" {
   handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
   runtime                        = "python3.13"
   role                           = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout                        = 60
-  reserved_concurrent_executions = 1
+  timeout = 60
+
   environment {
     variables = {
       ARTICLES_TABLE = var.articles_table
@@ -126,8 +126,8 @@ resource "aws_lambda_function" "financial_sentiment_lambda" {
   handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
   runtime                        = "python3.13"
   role                           = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout                        = 300
-  reserved_concurrent_executions = 5
+  timeout = 300
+
   environment {
     variables = {
       ARTICLES_TABLE = var.articles_table
