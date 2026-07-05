@@ -108,13 +108,13 @@ resource "aws_iam_policy" "lambda_policy" {
 }
 
 resource "aws_lambda_function" "stock_data_to_dynamo" {
-  function_name                  = var.lambda_name
-  s3_bucket                      = var.build_data_bucket
-  s3_key                         = var.s3_key
-  handler                        = "index.handler"
-  runtime                        = "nodejs22.x"
-  role                           = aws_iam_role.lambda_exec_role.arn
-  timeout = 60
+  function_name = var.lambda_name
+  s3_bucket     = var.build_data_bucket
+  s3_key        = var.s3_key
+  handler       = "index.handler"
+  runtime       = "nodejs22.x"
+  role          = aws_iam_role.lambda_exec_role.arn
+  timeout       = 60
 
   environment {
     variables = {
