@@ -79,3 +79,21 @@ variable "aws_region" {
   description = "AWS region for API Gateway authorizer issuer URL."
   type        = string
 }
+
+variable "api_throttle_rate_limit" {
+  description = "API Gateway sustained request rate limit (req/s)."
+  type        = number
+  default     = 10
+}
+
+variable "api_throttle_burst_limit" {
+  description = "API Gateway burst request limit."
+  type        = number
+  default     = 20
+}
+
+variable "backend_lambda_concurrency" {
+  description = "Reserved concurrent executions for the backend Lambda."
+  type        = number
+  default     = 10
+}

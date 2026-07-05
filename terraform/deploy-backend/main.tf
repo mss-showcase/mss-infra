@@ -18,13 +18,14 @@ resource "aws_cloudwatch_log_group" "mss_backend_lambda_log_group" {
 }
 
 resource "aws_lambda_function" "mss_backend_lambda" {
-  function_name = var.mss_backend_lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.mss_backend_lambda_s3_key
-  handler       = "index.handler"
-  runtime       = "nodejs22.x"
-  role          = aws_iam_role.lambda_exec_role.arn
-  timeout       = 30
+  function_name                  = var.mss_backend_lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.mss_backend_lambda_s3_key
+  handler                        = "index.handler"
+  runtime                        = "nodejs22.x"
+  role                           = aws_iam_role.lambda_exec_role.arn
+  timeout                        = 30
+  reserved_concurrent_executions = var.backend_lambda_concurrency
 
   environment {
     variables = {
@@ -193,8 +194,8 @@ resource "aws_apigatewayv2_stage" "mss_backend_stage" {
   auto_deploy = true
 
   default_route_settings {
-    throttling_burst_limit = 5000
-    throttling_rate_limit  = 10000
+    throttling_burst_limit = var.api_throttle_burst_limit
+    throttling_rate_limit  = var.api_throttle_rate_limit
   }
 }
 

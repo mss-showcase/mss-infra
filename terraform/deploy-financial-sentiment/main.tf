@@ -100,13 +100,14 @@ resource "aws_sqs_queue" "sentiment_queue" {
 }
 
 resource "aws_lambda_function" "feed_reader_lambda" {
-  function_name = var.feed_reader_lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.artifact_key
-  handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime       = "python3.13"
-  role          = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout       = 60
+  function_name                  = var.feed_reader_lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.artifact_key
+  handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
+  runtime                        = "python3.13"
+  role                           = aws_iam_role.sentiment_lambda_exec_role.arn
+  timeout                        = 60
+  reserved_concurrent_executions = 1
   environment {
     variables = {
       ARTICLES_TABLE = var.articles_table
@@ -119,13 +120,14 @@ resource "aws_lambda_function" "feed_reader_lambda" {
 }
 
 resource "aws_lambda_function" "financial_sentiment_lambda" {
-  function_name = var.financial_sentiment_lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.artifact_key
-  handler       = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
-  runtime       = "python3.13"
-  role          = aws_iam_role.sentiment_lambda_exec_role.arn
-  timeout       = 300
+  function_name                  = var.financial_sentiment_lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.artifact_key
+  handler                        = "handler.lambda_handler" # <--- handler.py, function: lambda_handler
+  runtime                        = "python3.13"
+  role                           = aws_iam_role.sentiment_lambda_exec_role.arn
+  timeout                        = 300
+  reserved_concurrent_executions = 5
   environment {
     variables = {
       ARTICLES_TABLE = var.articles_table
@@ -141,6 +143,10 @@ resource "aws_lambda_event_source_mapping" "sqs_to_sentiment_lambda" {
   function_name                      = aws_lambda_function.financial_sentiment_lambda.arn
   batch_size                         = 1
   maximum_batching_window_in_seconds = 5
+
+  scaling_config {
+    maximum_concurrency = 5
+  }
 }
 
 resource "aws_cloudwatch_event_rule" "twice_daily" {

@@ -67,13 +67,14 @@ resource "aws_iam_role_policy_attachment" "lambda_logs" {
 }
 
 resource "aws_lambda_function" "stock_data_lambda" {
-  function_name = var.lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.artifact_key
-  handler       = "index.handler"
-  runtime       = "nodejs22.x"
-  role          = aws_iam_role.lambda_exec_role.arn
-  timeout       = 60
+  function_name                  = var.lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.artifact_key
+  handler                        = "index.handler"
+  runtime                        = "nodejs22.x"
+  role                           = aws_iam_role.lambda_exec_role.arn
+  timeout                        = 60
+  reserved_concurrent_executions = 1
 
   environment {
     variables = {
@@ -131,13 +132,14 @@ resource "aws_iam_role_policy_attachment" "fundamentals_lambda_logs" {
 }
 
 resource "aws_lambda_function" "fundamentals_lambda" {
-  function_name = var.fundamentals_lambda_name
-  s3_bucket     = var.build_data_bucket
-  s3_key        = var.fundamentals_artifact_key
-  handler       = "index.handler"
-  runtime       = "nodejs22.x"
-  role          = aws_iam_role.fundamentals_lambda_exec_role.arn
-  timeout       = 60
+  function_name                  = var.fundamentals_lambda_name
+  s3_bucket                      = var.build_data_bucket
+  s3_key                         = var.fundamentals_artifact_key
+  handler                        = "index.handler"
+  runtime                        = "nodejs22.x"
+  role                           = aws_iam_role.fundamentals_lambda_exec_role.arn
+  timeout                        = 60
+  reserved_concurrent_executions = 1
 
   environment {
     variables = {

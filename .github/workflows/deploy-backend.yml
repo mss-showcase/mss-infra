@@ -107,6 +107,9 @@ jobs:
           webhosting_website_url = "${WEBHOSTING_WEBSITE_URL}"
           cognito_user_pool_client_id = "${COGNITO_USER_POOL_CLIENT_ID}"
           aws_region = "${AWS_REGION}"
+          api_throttle_rate_limit = 10
+          api_throttle_burst_limit = 20
+          backend_lambda_concurrency = 10
           EOF
 
       - name: Terraform plan
